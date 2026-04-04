@@ -23,6 +23,8 @@
       flex-shrink: 0;
     }
 
+    header { display: flex; justify-content: space-between; align-items: center; }
+
     header h1 {
       font-size: 1.25rem;
       font-weight: 700;
@@ -35,6 +37,20 @@
       color: #aaa;
       margin-top: 2px;
     }
+
+    #clear-chat {
+      background: none;
+      border: 1px solid #555;
+      color: #999;
+      font-size: 0.75rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    #clear-chat:hover { color: #fff; border-color: #999; }
 
     /* Tab Nav */
     .tab-nav {
@@ -507,8 +523,11 @@
 </head>
 <body>
   <header>
-    <h1>Ranch Hand</h1>
-    <p>Capitol Cowboys Operations</p>
+    <div>
+      <h1>Ranch Hand</h1>
+      <p>Capitol Cowboys Operations</p>
+    </div>
+    <button id="clear-chat">Clear Chat</button>
   </header>
 
   <div class="tab-nav">
@@ -671,12 +690,38 @@
       });
     }
 
+    function saveMessages() {
+      localStorage.setItem('rh_messages', JSON.stringify(messages));
+    }
+
+    function loadMessages() {
+      try { return JSON.parse(localStorage.getItem('rh_messages') || '[]'); }
+      catch { return []; }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      const saved = loadMessages();
+      if (saved.length > 0) {
+        messages = saved;
+        messages.forEach(m => appendMessage(m.role, m.content));
+      } else {
+        const greeting = "Hey \u2014 I'm Ranch Hand. What do you need?";
+        messages.push({ role: 'assistant', content: greeting });
+        appendMessage('assistant', greeting);
+        saveMessages();
+      }
+      renderTasks();
+      renderCalendar();
+    });
+
+    document.getElementById('clear-chat').addEventListener('click', () => {
+      messages = [];
+      localStorage.removeItem('rh_messages');
+      chat.innerHTML = '';
       const greeting = "Hey \u2014 I'm Ranch Hand. What do you need?";
       messages.push({ role: 'assistant', content: greeting });
       appendMessage('assistant', greeting);
-      renderTasks();
-      renderCalendar();
+      saveMessages();
     });
 
     function appendMessage(role, content) {
@@ -712,6 +757,7 @@
       input.style.height = 'auto';
 
       messages.push({ role: 'user', content: text });
+      saveMessages();
       appendMessage('user', text);
       showTyping();
 
@@ -765,6 +811,7 @@
       hideTyping();
       if (assistantText) {
         messages.push({ role: 'assistant', content: assistantText });
+        saveMessages();
 
         // Detect task assignment in chat response
         const assignMatch = assistantText.match(/ASSIGNED TO:\s*(.+)/i);
