@@ -233,48 +233,59 @@
 
     sendBtn.addEventListener('click', send);
 
-    // Speech-to-text
+    // Speech-to-text via MediaRecorder + Whisper
     const micBtn = document.getElementById('mic-btn');
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (SpeechRecognition) {
+    if (navigator.mediaDevices && typeof MediaRecorder !== 'undefined') {
       micBtn.style.display = 'block';
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-      let listening = false;
+      let mediaRecorder = null;
+      let audioChunks = [];
+      let recording = false;
 
-      micBtn.addEventListener('click', () => {
-        if (listening) {
-          recognition.stop();
+      micBtn.addEventListener('click', async () => {
+        if (recording) {
+          mediaRecorder.stop();
         } else {
-          recognition.start();
-        }
-      });
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioChunks = [];
+            mediaRecorder = new MediaRecorder(stream);
 
-      recognition.addEventListener('start', () => {
-        listening = true;
-        micBtn.classList.add('active');
-      });
+            mediaRecorder.addEventListener('dataavailable', (e) => {
+              if (e.data.size > 0) audioChunks.push(e.data);
+            });
 
-      recognition.addEventListener('end', () => {
-        listening = false;
-        micBtn.classList.remove('active');
-      });
+            mediaRecorder.addEventListener('stop', async () => {
+              stream.getTracks().forEach(t => t.stop());
+              recording = false;
+              micBtn.classList.remove('active');
 
-      recognition.addEventListener('result', (e) => {
-        let transcript = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) {
-            transcript += e.results[i][0].transcript;
-          }
-        }
-        if (transcript) {
-          const current = input.value;
-          input.value = current + (current ? ' ' : '') + transcript.trim();
-          input.dispatchEvent(new Event('input'));
-          input.focus();
+              const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+              const reader = new FileReader();
+              reader.onloadend = async () => {
+                const base64 = reader.result.split(',')[1];
+                try {
+                  const res = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ audio: base64 }),
+                  });
+                  const data = await res.json();
+                  if (data.text) {
+                    const current = input.value;
+                    input.value = current + (current ? ' ' : '') + data.text.trim();
+                    input.dispatchEvent(new Event('input'));
+                    input.focus();
+                  }
+                } catch {}
+              };
+              reader.readAsDataURL(blob);
+            });
+
+            mediaRecorder.start();
+            recording = true;
+            micBtn.classList.add('active');
+          } catch {}
         }
       });
     }

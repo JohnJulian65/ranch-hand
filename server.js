@@ -8,9 +8,13 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const OpenAI = require('openai');
+
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 app.use(express.static('public'));
+
+const openai = new OpenAI();
 
 // Load org context as system prompt
 const systemPrompt = fs.readFileSync(
@@ -58,6 +62,29 @@ app.post('/api/chat', async (req, res) => {
       res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
       res.end();
     }
+  }
+});
+
+app.post('/api/transcribe', async (req, res) => {
+  const { audio } = req.body;
+
+  if (!audio) {
+    return res.status(400).json({ error: 'audio data is required' });
+  }
+
+  try {
+    const buffer = Buffer.from(audio, 'base64');
+    const file = new File([buffer], 'audio.webm', { type: 'audio/webm' });
+
+    const transcription = await openai.audio.transcriptions.create({
+      file: file,
+      model: 'whisper-1',
+    });
+
+    res.json({ text: transcription.text });
+  } catch (err) {
+    console.error('Transcription error:', err.message);
+    res.status(500).json({ error: 'Transcription failed' });
   }
 });
 
