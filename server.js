@@ -14,8 +14,6 @@ app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 app.use(express.static('public'));
 
-const openai = new OpenAI();
-
 // Load org context as system prompt
 const systemPrompt = fs.readFileSync(
   path.join(__dirname, 'context', 'org-context.md'),
@@ -72,7 +70,12 @@ app.post('/api/transcribe', async (req, res) => {
     return res.status(400).json({ error: 'audio data is required' });
   }
 
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(500).json({ error: 'OPENAI_API_KEY is not configured' });
+  }
+
   try {
+    const openai = new OpenAI();
     const buffer = Buffer.from(audio, 'base64');
     const file = new File([buffer], 'audio.webm', { type: 'audio/webm' });
 
