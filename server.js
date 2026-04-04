@@ -5,12 +5,26 @@ const Anthropic = require('@anthropic-ai/sdk');
 const fs = require('fs');
 const path = require('path');
 
+const { Resend } = require('resend');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
+// Member email directory
+const MEMBER_EMAILS = {
+  'Grant': '',
+  'Patrick': '',
+  'Aaron': '',
+  'Cesar': 'cdager12@gmail.com',
+  'Jon Michael': '',
+  'Julian': '',
+};
+
+const FROM_ADDRESS = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
 // Load org context as system prompt
 const systemPrompt = fs.readFileSync(
@@ -58,6 +72,50 @@ app.post('/api/chat', async (req, res) => {
       res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
       res.end();
     }
+  }
+});
+
+app.post('/api/send-email', async (req, res) => {
+  const { assignee, task, dueDate, assignedBy } = req.body;
+
+  if (!assignee || !task) {
+    return res.status(400).json({ error: 'assignee and task are required' });
+  }
+
+  const email = MEMBER_EMAILS[assignee];
+  if (!email) {
+    return res.json({ sent: false, reason: 'No email on file for ' + assignee });
+  }
+
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(500).json({ error: 'RESEND_API_KEY is not configured' });
+  }
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: `Ranch Hand <${FROM_ADDRESS}>`,
+      to: email,
+      subject: 'Ranch Hand — New Task Assigned to You',
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+          <h2 style="color:#2C2C2C;margin-bottom:4px;">New Task Assigned</h2>
+          <p style="color:#888;font-size:14px;margin-top:0;">From Ranch Hand / Capitol Cowboys Operations</p>
+          <hr style="border:none;border-top:2px solid #C9A84C;margin:16px 0;">
+          <p><strong>Task:</strong> ${task}</p>
+          <p><strong>Assigned To:</strong> ${assignee}</p>
+          ${dueDate ? `<p><strong>Due Date:</strong> ${dueDate}</p>` : ''}
+          ${assignedBy ? `<p><strong>Assigned By:</strong> ${assignedBy}</p>` : ''}
+          <hr style="border:none;border-top:1px solid #eee;margin:16px 0;">
+          <p style="color:#999;font-size:12px;">This notification was sent by Ranch Hand, the AI operations assistant for Capitol Cowboys LLC.</p>
+        </div>
+      `,
+    });
+
+    res.json({ sent: true });
+  } catch (err) {
+    console.error('Email send error:', err.message);
+    res.status(500).json({ error: 'Failed to send email' });
   }
 });
 

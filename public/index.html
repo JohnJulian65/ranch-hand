@@ -765,6 +765,17 @@
       hideTyping();
       if (assistantText) {
         messages.push({ role: 'assistant', content: assistantText });
+
+        // Detect task assignment in chat response
+        const assignMatch = assistantText.match(/ASSIGNED TO:\s*(.+)/i);
+        if (assignMatch) {
+          const assignee = assignMatch[1].trim().split(/[,\n]/)[0].trim();
+          const taskMatch = assistantText.match(/TASK:\s*(.+)/i);
+          const dueMatch = assistantText.match(/DUE(?:\s*DATE)?:\s*(.+)/i);
+          const task = taskMatch ? taskMatch[1].trim() : 'Task from chat';
+          const due = dueMatch ? dueMatch[1].trim() : '';
+          sendTaskEmail(assignee, task, due);
+        }
       }
 
       sending = false;
@@ -898,12 +909,23 @@
       taskForm.classList.remove('open');
     });
 
+    // Email notification helper
+    function sendTaskEmail(assignee, task, dueDate) {
+      if (!assignee) return;
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignee, task, dueDate: dueDate || '', assignedBy: 'Ranch Hand Tasks' }),
+      }).catch(() => {});
+    }
+
     document.getElementById('tf-save').addEventListener('click', () => {
       const title = tfTitle.value.trim();
       if (!title) return;
 
       const tasks = getTasks();
       const editId = tfEditId.value;
+      const isNew = !editId;
 
       if (editId) {
         const idx = tasks.findIndex(t => t.id === editId);
@@ -927,6 +949,10 @@
       taskForm.classList.remove('open');
       renderTasks();
       renderCalendar();
+
+      if (isNew && tfAssignee.value) {
+        sendTaskEmail(tfAssignee.value, title, tfDue.value);
+      }
     });
 
     window.editTask = function(id) {
