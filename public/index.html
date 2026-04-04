@@ -233,59 +233,60 @@
 
     sendBtn.addEventListener('click', send);
 
-    // Speech-to-text via MediaRecorder + Whisper
+    // Speech-to-text via Web Speech API (works on Chrome, Edge, Safari desktop & iOS)
     const micBtn = document.getElementById('mic-btn');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (navigator.mediaDevices && typeof MediaRecorder !== 'undefined') {
+    if (SpeechRecognition) {
       micBtn.style.display = 'block';
-      let mediaRecorder = null;
-      let audioChunks = [];
-      let recording = false;
+      let listening = false;
+      let recognition = null;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-      micBtn.addEventListener('click', async () => {
-        if (recording) {
-          mediaRecorder.stop();
+      function createRecognition() {
+        const r = new SpeechRecognition();
+        r.lang = 'en-US';
+        r.interimResults = false;
+        r.continuous = isIOS ? false : true;
+
+        r.addEventListener('result', (e) => {
+          let transcript = '';
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) {
+              transcript += e.results[i][0].transcript;
+            }
+          }
+          if (transcript) {
+            const current = input.value;
+            input.value = current + (current ? ' ' : '') + transcript.trim();
+            input.dispatchEvent(new Event('input'));
+            input.focus();
+          }
+        });
+
+        r.addEventListener('end', () => {
+          listening = false;
+          micBtn.classList.remove('active');
+          recognition = null;
+        });
+
+        r.addEventListener('error', () => {
+          listening = false;
+          micBtn.classList.remove('active');
+          recognition = null;
+        });
+
+        return r;
+      }
+
+      micBtn.addEventListener('click', () => {
+        if (listening && recognition) {
+          recognition.stop();
         } else {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioChunks = [];
-            mediaRecorder = new MediaRecorder(stream);
-
-            mediaRecorder.addEventListener('dataavailable', (e) => {
-              if (e.data.size > 0) audioChunks.push(e.data);
-            });
-
-            mediaRecorder.addEventListener('stop', async () => {
-              stream.getTracks().forEach(t => t.stop());
-              recording = false;
-              micBtn.classList.remove('active');
-
-              const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
-              const reader = new FileReader();
-              reader.onloadend = async () => {
-                const base64 = reader.result.split(',')[1];
-                try {
-                  const res = await fetch('/api/transcribe', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ audio: base64 }),
-                  });
-                  const data = await res.json();
-                  if (data.text) {
-                    const current = input.value;
-                    input.value = current + (current ? ' ' : '') + data.text.trim();
-                    input.dispatchEvent(new Event('input'));
-                    input.focus();
-                  }
-                } catch {}
-              };
-              reader.readAsDataURL(blob);
-            });
-
-            mediaRecorder.start();
-            recording = true;
-            micBtn.classList.add('active');
-          } catch {}
+          recognition = createRecognition();
+          recognition.start();
+          listening = true;
+          micBtn.classList.add('active');
         }
       });
     }
