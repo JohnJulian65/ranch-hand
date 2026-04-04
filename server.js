@@ -21,7 +21,7 @@ const MEMBER_EMAILS = {
   'Aaron': '',
   'Cesar': 'cdager12@gmail.com',
   'Jon Michael': '',
-  'Julian': '',
+  'Julian': 'johnjvandaeleiii@gmail.com',
 };
 
 const FROM_ADDRESS = process.env.RESEND_FROM || 'onboarding@resend.dev';
