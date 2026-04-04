@@ -166,6 +166,33 @@
     #input-bar button:hover:not(:disabled) {
       background: #b8943f;
     }
+
+    #mic-btn {
+      background: #2C2C2C;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0 14px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: none;
+      line-height: 1;
+    }
+
+    #mic-btn.active {
+      background: #c0392b;
+      animation: pulse 1.5s infinite;
+    }
+
+    #mic-btn:hover:not(.active) {
+      background: #444;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
   </style>
 </head>
 <body>
@@ -178,6 +205,7 @@
 
   <div id="input-bar">
     <textarea id="input" rows="1" placeholder="Type a message..." autocomplete="off"></textarea>
+    <button id="mic-btn" aria-label="Voice input">&#x1F3A4;</button>
     <button id="send">Send</button>
   </div>
 
@@ -204,6 +232,52 @@
     });
 
     sendBtn.addEventListener('click', send);
+
+    // Speech-to-text
+    const micBtn = document.getElementById('mic-btn');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      micBtn.style.display = 'block';
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      let listening = false;
+
+      micBtn.addEventListener('click', () => {
+        if (listening) {
+          recognition.stop();
+        } else {
+          recognition.start();
+        }
+      });
+
+      recognition.addEventListener('start', () => {
+        listening = true;
+        micBtn.classList.add('active');
+      });
+
+      recognition.addEventListener('end', () => {
+        listening = false;
+        micBtn.classList.remove('active');
+      });
+
+      recognition.addEventListener('result', (e) => {
+        let transcript = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) {
+            transcript += e.results[i][0].transcript;
+          }
+        }
+        if (transcript) {
+          const current = input.value;
+          input.value = current + (current ? ' ' : '') + transcript.trim();
+          input.dispatchEvent(new Event('input'));
+          input.focus();
+        }
+      });
+    }
 
     // Greeting on load
     window.addEventListener('DOMContentLoaded', () => {
