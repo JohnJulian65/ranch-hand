@@ -93,8 +93,8 @@ app.post('/api/send-email', async (req, res) => {
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: `Ranch Hand <${FROM_ADDRESS}>`,
+    const result = await resend.emails.send({
+      from: FROM_ADDRESS,
       to: email,
       subject: 'Ranch Hand — New Task Assigned to You',
       html: `
@@ -112,7 +112,8 @@ app.post('/api/send-email', async (req, res) => {
       `,
     });
 
-    res.json({ sent: true });
+    console.log('Resend response:', JSON.stringify(result));
+    res.json({ sent: true, result });
   } catch (err) {
     console.error('Email send error:', err.message);
     res.status(500).json({ error: 'Failed to send email' });

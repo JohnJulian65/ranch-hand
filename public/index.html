@@ -963,7 +963,10 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignee, task, dueDate: dueDate || '', assignedBy: 'Ranch Hand Tasks' }),
-      }).catch(() => {});
+      })
+      .then(r => r.json())
+      .then(data => console.log('Email result:', data))
+      .catch(err => console.error('Email error:', err));
     }
 
     document.getElementById('tf-save').addEventListener('click', () => {
