@@ -11,7 +11,20 @@ CURRENT LEADERSHIP:
 - Julian
 
 UPCOMING EVENTS:
-[PLACEHOLDER — event calendar will be added here]
+
+1. Capitol Cowboys at D5 (Wild West Thursday)
+   - Date: Thursday, April 9, 2026 at 7:00 PM
+   - Venue: Desert 5 Spot, Washington, DC
+   - RSVP: https://go.partiful.com/yxIb01HW
+   - Details: Classic country night. Live music downstairs, DJ and line dancing classes upstairs, mechanical bull rides, the famous Desert 5 five shot. Private section, exclusive list, Derby ticket giveaway.
+   - Attendance: 64 Going, 2 Maybe
+
+2. Postgame Champions
+   - Date: Saturday, April 18, 2026 at 6:00 PM
+   - Venue: Royal Sands, Washington, DC (post-Nationals game)
+   - RSVP: https://partiful.com/e/GmyVYc70EsrwTufDfV1R
+   - Details: Post-Nationals game celebration. Private section with drink specials, cornhole games, tailgate style party. Baseball best dress code. Food available for individual purchase.
+   - Attendance: 74 Going, 4 Maybe
 
 SPONSORS:
 [PLACEHOLDER — sponsor list will be added here]
