@@ -26,11 +26,13 @@ const MEMBER_EMAILS = {
 
 const FROM_ADDRESS = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
-// Load org context as system prompt
-const systemPrompt = fs.readFileSync(
-  path.join(__dirname, 'context', 'org-context.md'),
-  'utf-8'
-);
+// Load all context files as system prompt
+const contextDir = path.join(__dirname, 'context');
+const systemPrompt = fs.readdirSync(contextDir)
+  .filter(f => f.endsWith('.md'))
+  .sort()
+  .map(f => fs.readFileSync(path.join(contextDir, f), 'utf-8'))
+  .join('\n\n---\n\n');
 
 const client = new Anthropic();
 
