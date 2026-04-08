@@ -12,6 +12,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "node-cron": "^3.0.3",
+    "@libsql/client": "^0.14.0",
     "resend": "^4.1.0",
     "sql.js": "^1.11.0"
   }

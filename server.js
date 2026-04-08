@@ -6,7 +6,6 @@ const fs = require('fs');
 const path = require('path');
 
 const { Resend } = require('resend');
-const initSqlJs = require('sql.js');
 const cron = require('node-cron');
 
 const app = express();
@@ -16,23 +15,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Initialize SQLite database
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
-
-const DB_PATH = path.join(dataDir, 'tasks.db');
-let db;
+// Initialize database — Turso in production, sql.js locally
+let dbAll, dbGet, dbRun;
 
 async function initDb() {
-  const SQL = await initSqlJs();
-  if (fs.existsSync(DB_PATH)) {
-    const buffer = fs.readFileSync(DB_PATH);
-    db = new SQL.Database(buffer);
-  } else {
-    db = new SQL.Database();
-  }
-
-  db.run(`
+  const CREATE_TABLE = `
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -43,32 +30,69 @@ async function initDb() {
       status TEXT DEFAULT 'pending',
       created_at TEXT DEFAULT (datetime('now'))
     )
-  `);
-  saveDb();
-}
+  `;
 
-function saveDb() {
-  const data = db.export();
-  fs.writeFileSync(DB_PATH, Buffer.from(data));
-}
+  if (process.env.TURSO_DATABASE_URL) {
+    // Production: Turso (libsql over HTTP)
+    const { createClient } = require('@libsql/client/web');
+    const db = createClient({
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
 
-function dbAll(sql, params) {
-  const stmt = db.prepare(sql);
-  if (params) stmt.bind(params);
-  const rows = [];
-  while (stmt.step()) rows.push(stmt.getAsObject());
-  stmt.free();
-  return rows;
-}
+    dbAll = async (sql, params) => {
+      const result = await db.execute({ sql, args: params || [] });
+      return result.rows;
+    };
+    dbGet = async (sql, params) => {
+      const rows = await dbAll(sql, params);
+      return rows[0] || null;
+    };
+    dbRun = async (sql, params) => {
+      return await db.execute({ sql, args: params || [] });
+    };
 
-function dbGet(sql, params) {
-  const rows = dbAll(sql, params);
-  return rows[0] || null;
-}
+    await db.execute(CREATE_TABLE);
+    console.log('[DB] Connected to Turso');
+  } else {
+    // Local dev: sql.js (in-memory with file persistence)
+    const initSqlJs = require('sql.js');
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+    const DB_PATH = path.join(dataDir, 'tasks.db');
 
-function dbRun(sql, params) {
-  db.run(sql, params);
-  saveDb();
+    const SQL = await initSqlJs();
+    let sqlDb;
+    if (fs.existsSync(DB_PATH)) {
+      sqlDb = new SQL.Database(fs.readFileSync(DB_PATH));
+    } else {
+      sqlDb = new SQL.Database();
+    }
+
+    const saveDb = () => fs.writeFileSync(DB_PATH, Buffer.from(sqlDb.export()));
+
+    dbAll = async (sql, params) => {
+      const stmt = sqlDb.prepare(sql);
+      if (params) stmt.bind(params);
+      const rows = [];
+      while (stmt.step()) rows.push(stmt.getAsObject());
+      stmt.free();
+      return rows;
+    };
+    dbGet = async (sql, params) => {
+      const rows = await dbAll(sql, params);
+      return rows[0] || null;
+    };
+    dbRun = async (sql, params) => {
+      sqlDb.run(sql, params);
+      saveDb();
+      return { lastInsertRowid: sqlDb.exec("SELECT last_insert_rowid()")[0]?.values[0]?.[0] };
+    };
+
+    sqlDb.run(CREATE_TABLE);
+    saveDb();
+    console.log('[DB] Using local sql.js at', DB_PATH);
+  }
 }
 
 // Member email directory
@@ -133,7 +157,7 @@ app.post('/api/chat', async (req, res) => {
         for (const t of taskList) {
           if (!t.title) continue;
           const assignedEmail = MEMBER_EMAILS[t.assigned_to] || '';
-          dbRun(
+          await dbRun(
             `INSERT INTO tasks (title, description, assigned_to, assigned_email, due_date, status)
              VALUES (?, ?, ?, ?, ?, 'pending')`,
             [t.title, t.description || '', t.assigned_to || '', assignedEmail, t.due_date || '']
@@ -209,12 +233,12 @@ app.post('/api/send-email', async (req, res) => {
 
 // ── Task API ──
 
-app.get('/api/tasks', (req, res) => {
-  const tasks = dbAll('SELECT * FROM tasks ORDER BY created_at DESC');
+app.get('/api/tasks', async (req, res) => {
+  const tasks = await dbAll('SELECT * FROM tasks ORDER BY created_at DESC');
   res.json(tasks);
 });
 
-app.post('/api/tasks', (req, res) => {
+app.post('/api/tasks', async (req, res) => {
   const { title, description, assigned_to, due_date, status } = req.body;
 
   if (!title) {
@@ -222,21 +246,21 @@ app.post('/api/tasks', (req, res) => {
   }
 
   const assignedEmail = MEMBER_EMAILS[assigned_to] || '';
-  dbRun(
+  const result = await dbRun(
     `INSERT INTO tasks (title, description, assigned_to, assigned_email, due_date, status)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [title, description || '', assigned_to || '', assignedEmail, due_date || '', status || 'pending']
   );
 
-  const task = dbGet('SELECT * FROM tasks WHERE id = last_insert_rowid()');
+  const task = await dbGet('SELECT * FROM tasks WHERE id = ?', [Number(result.lastInsertRowid)]);
   res.json(task);
 });
 
-app.patch('/api/tasks/:id', (req, res) => {
+app.patch('/api/tasks/:id', async (req, res) => {
   const { id } = req.params;
   const { title, description, assigned_to, due_date, status } = req.body;
 
-  const existing = dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
+  const existing = await dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
   if (!existing) {
     return res.status(404).json({ error: 'Task not found' });
   }
@@ -245,7 +269,7 @@ app.patch('/api/tasks/:id', (req, res) => {
     ? (MEMBER_EMAILS[assigned_to] || '')
     : existing.assigned_email;
 
-  dbRun(
+  await dbRun(
     `UPDATE tasks SET title = ?, description = ?, assigned_to = ?, assigned_email = ?, due_date = ?, status = ? WHERE id = ?`,
     [
       title !== undefined ? title : existing.title,
@@ -258,17 +282,17 @@ app.patch('/api/tasks/:id', (req, res) => {
     ]
   );
 
-  const updated = dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
+  const updated = await dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
   res.json(updated);
 });
 
-app.delete('/api/tasks/:id', (req, res) => {
+app.delete('/api/tasks/:id', async (req, res) => {
   const { id } = req.params;
-  const existing = dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
+  const existing = await dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
   if (!existing) {
     return res.status(404).json({ error: 'Task not found' });
   }
-  dbRun('DELETE FROM tasks WHERE id = ?', [Number(id)]);
+  await dbRun('DELETE FROM tasks WHERE id = ?', [Number(id)]);
   res.json({ deleted: true });
 });
 
@@ -320,7 +344,7 @@ async function sendReminderEmail(task, type) {
   }
 }
 
-function runDailyReminders() {
+async function runDailyReminders() {
   console.log('[Reminder] Running daily task check...');
 
   const today = new Date();
@@ -331,22 +355,20 @@ function runDailyReminders() {
   twoDaysOut.setDate(twoDaysOut.getDate() + 2);
   const twoDaysStr = twoDaysOut.toISOString().split('T')[0];
 
-  // Tasks due within 48 hours that are still pending or in-progress
-  const upcoming = dbAll(
+  const upcoming = await dbAll(
     `SELECT * FROM tasks WHERE due_date != '' AND due_date >= ? AND due_date <= ? AND status IN ('pending', 'in-progress') AND assigned_email != ''`,
     [todayStr, twoDaysStr]
   );
 
-  // Tasks that are overdue (past due date, not done)
-  const overdue = dbAll(
+  const overdue = await dbAll(
     `SELECT * FROM tasks WHERE due_date != '' AND due_date < ? AND status IN ('pending', 'in-progress') AND assigned_email != ''`,
     [todayStr]
   );
 
   console.log(`[Reminder] Found ${upcoming.length} upcoming, ${overdue.length} overdue tasks`);
 
-  upcoming.forEach(task => sendReminderEmail(task, 'upcoming'));
-  overdue.forEach(task => sendReminderEmail(task, 'overdue'));
+  for (const task of upcoming) await sendReminderEmail(task, 'upcoming');
+  for (const task of overdue) await sendReminderEmail(task, 'overdue');
 }
 
 // ── Weekly Digest (Mondays at 8 AM) ──
@@ -404,22 +426,23 @@ async function sendWeeklyDigest() {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
 
-  const dueThisWeek = dbAll(
+  const dueThisWeek = await dbAll(
     `SELECT * FROM tasks WHERE due_date >= ? AND due_date <= ? AND status IN ('pending', 'in-progress') ORDER BY due_date ASC`,
     [todayStr, endOfWeekStr]
   );
 
-  const overdue = dbAll(
+  const overdue = await dbAll(
     `SELECT * FROM tasks WHERE due_date != '' AND due_date < ? AND status IN ('pending', 'in-progress') ORDER BY due_date ASC`,
     [todayStr]
   );
 
-  const completed = dbAll(
+  const completed = await dbAll(
     `SELECT * FROM tasks WHERE status = 'done' AND due_date >= ? ORDER BY due_date ASC`,
     [sevenDaysAgoStr]
   );
 
-  const totalActive = dbAll(`SELECT * FROM tasks WHERE status IN ('pending', 'in-progress')`).length;
+  const allActive = await dbAll(`SELECT * FROM tasks WHERE status IN ('pending', 'in-progress')`);
+  const totalActive = allActive.length;
 
   const mondayDate = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
