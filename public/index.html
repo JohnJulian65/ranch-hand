@@ -21,38 +21,15 @@
       color: #fff;
       padding: 14px 20px;
       flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    header { display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 1.25rem; font-weight: 700; color: #C9A84C; line-height: 1.2; }
+    header p { font-size: 0.8rem; color: #aaa; margin-top: 2px; }
 
-    header h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #C9A84C;
-      line-height: 1.2;
-    }
-
-    header p {
-      font-size: 0.8rem;
-      color: #aaa;
-      margin-top: 2px;
-    }
-
-    #clear-chat {
-      background: none;
-      border: 1px solid #555;
-      color: #999;
-      font-size: 0.75rem;
-      padding: 5px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: inherit;
-      white-space: nowrap;
-    }
-
-    #clear-chat:hover { color: #fff; border-color: #999; }
-
-    /* Tab Nav */
+    /* Main Tab Nav */
     .tab-nav {
       display: flex;
       flex-shrink: 0;
@@ -73,18 +50,73 @@
       transition: color 0.2s, background 0.2s;
     }
 
-    .tab-nav button.active {
-      color: #C9A84C;
-      background: #3a3a3a;
-    }
+    .tab-nav button.active { color: #C9A84C; background: #3a3a3a; }
+    .tab-nav button:not(.active):hover { color: #ccc; }
 
-    .tab-nav button:not(.active):hover {
-      color: #ccc;
-    }
-
-    /* Tab Content */
     .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
     .tab-content.active { display: flex; }
+
+    /* Chat Conversation Tabs */
+    .conv-bar {
+      display: flex;
+      align-items: center;
+      background: #f5f5f5;
+      border-bottom: 1px solid #e5e5e5;
+      flex-shrink: 0;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .conv-bar::-webkit-scrollbar { height: 3px; }
+    .conv-bar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    .conv-tab {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 7px 10px;
+      border: none;
+      background: none;
+      color: #777;
+      font-size: 0.78rem;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      flex-shrink: 0;
+    }
+
+    .conv-tab.active {
+      color: #2C2C2C;
+      font-weight: 600;
+      border-bottom-color: #C9A84C;
+      background: #fff;
+    }
+
+    .conv-tab:not(.active):hover { color: #333; background: #eee; }
+
+    .conv-tab .close-conv {
+      font-size: 0.7rem;
+      color: #aaa;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+
+    .conv-tab .close-conv:hover { color: #c0392b; }
+
+    .conv-new {
+      padding: 6px 12px;
+      border: none;
+      background: none;
+      color: #C9A84C;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .conv-new:hover { color: #b8943f; }
 
     /* Chat */
     #chat {
@@ -105,44 +137,16 @@
       word-wrap: break-word;
     }
 
-    .msg.assistant {
-      align-self: flex-start;
-      background: #f1f1f1;
-      border-bottom-left-radius: 4px;
-    }
-
-    .msg.user {
-      align-self: flex-end;
-      background: #C9A84C;
-      color: #fff;
-      border-bottom-right-radius: 4px;
-    }
-
+    .msg.assistant { align-self: flex-start; background: #f1f1f1; border-bottom-left-radius: 4px; }
+    .msg.user { align-self: flex-end; background: #C9A84C; color: #fff; border-bottom-right-radius: 4px; }
     .msg p { margin-bottom: 8px; }
     .msg p:last-child { margin-bottom: 0; }
     .msg strong { font-weight: 600; }
     .msg ul, .msg ol { margin: 4px 0 8px 20px; }
     .msg li { margin-bottom: 2px; }
-    .msg code {
-      background: rgba(0,0,0,0.07);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-size: 0.88em;
-    }
-    .msg pre {
-      background: #2C2C2C;
-      color: #f1f1f1;
-      padding: 10px 12px;
-      border-radius: 8px;
-      overflow-x: auto;
-      margin: 6px 0;
-      font-size: 0.85em;
-    }
-    .msg pre code {
-      background: none;
-      padding: 0;
-      color: inherit;
-    }
+    .msg code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
+    .msg pre { background: #2C2C2C; color: #f1f1f1; padding: 10px 12px; border-radius: 8px; overflow-x: auto; margin: 6px 0; font-size: 0.85em; }
+    .msg pre code { background: none; padding: 0; color: inherit; }
 
     .typing {
       align-self: flex-start;
@@ -155,14 +159,7 @@
       align-items: center;
     }
 
-    .typing span {
-      width: 7px;
-      height: 7px;
-      background: #999;
-      border-radius: 50%;
-      animation: bounce 1.4s infinite ease-in-out;
-    }
-
+    .typing span { width: 7px; height: 7px; background: #999; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
 
@@ -181,343 +178,85 @@
     }
 
     #input-bar textarea {
-      flex: 1;
-      resize: none;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-size: 0.95rem;
-      font-family: inherit;
-      line-height: 1.4;
-      max-height: 120px;
-      outline: none;
+      flex: 1; resize: none; border: 1px solid #ddd; border-radius: 12px;
+      padding: 10px 14px; font-size: 0.95rem; font-family: inherit;
+      line-height: 1.4; max-height: 120px; outline: none;
     }
-
-    #input-bar textarea:focus {
-      border-color: #C9A84C;
-    }
+    #input-bar textarea:focus { border-color: #C9A84C; }
 
     #input-bar button {
-      background: #C9A84C;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 0 18px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      flex-shrink: 0;
+      background: #C9A84C; color: #fff; border: none; border-radius: 12px;
+      padding: 0 18px; font-size: 0.95rem; font-weight: 600; cursor: pointer; flex-shrink: 0;
     }
-
-    #input-bar button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    #input-bar button:hover:not(:disabled) {
-      background: #b8943f;
-    }
+    #input-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #input-bar button:hover:not(:disabled) { background: #b8943f; }
 
     #mic-btn {
-      background: #2C2C2C;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 0 14px;
-      font-size: 1.1rem;
-      cursor: pointer;
-      flex-shrink: 0;
-      display: none;
-      line-height: 1;
+      background: #2C2C2C; color: #fff; border: none; border-radius: 12px;
+      padding: 0 14px; font-size: 1.1rem; cursor: pointer; flex-shrink: 0;
+      display: none; line-height: 1;
     }
+    #mic-btn.active { background: #c0392b; animation: pulse 1.5s infinite; }
+    #mic-btn:hover:not(.active) { background: #444; }
 
-    #mic-btn.active {
-      background: #c0392b;
-      animation: pulse 1.5s infinite;
-    }
-
-    #mic-btn:hover:not(.active) {
-      background: #444;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
     /* Tasks View */
-    #tasks-view {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    }
-
-    .summary-bar {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .summary-item {
-      background: #f5f5f5;
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-
+    #tasks-view { flex: 1; overflow-y: auto; padding: 16px; }
+    .summary-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .summary-item { background: #f5f5f5; padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; }
     .summary-item.overdue { color: #c0392b; }
 
-    .add-task-btn {
-      background: #C9A84C;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 20px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-bottom: 16px;
-      font-family: inherit;
-    }
-
+    .add-task-btn { background: #C9A84C; color: #fff; border: none; border-radius: 10px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-bottom: 16px; font-family: inherit; }
     .add-task-btn:hover { background: #b8943f; }
 
-    .task-form {
-      display: none;
-      background: #f9f9f9;
-      border: 1px solid #e5e5e5;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-
+    .task-form { display: none; background: #f9f9f9; border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
     .task-form.open { display: block; }
-
-    .task-form label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #666;
-      margin-bottom: 4px;
-      margin-top: 10px;
-    }
-
+    .task-form label { display: block; font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; margin-top: 10px; }
     .task-form label:first-child { margin-top: 0; }
+    .task-form input, .task-form select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; font-family: inherit; outline: none; }
+    .task-form input:focus, .task-form select:focus { border-color: #C9A84C; }
+    .task-form-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .task-form-actions button { padding: 8px 18px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-save { background: #C9A84C; color: #fff; } .btn-save:hover { background: #b8943f; }
+    .btn-cancel { background: #e5e5e5; color: #333; } .btn-cancel:hover { background: #ddd; }
 
-    .task-form input,
-    .task-form select {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-family: inherit;
-      outline: none;
-    }
-
-    .task-form input:focus,
-    .task-form select:focus {
-      border-color: #C9A84C;
-    }
-
-    .task-form-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .task-form-actions button {
-      padding: 8px 18px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    .btn-save { background: #C9A84C; color: #fff; }
-    .btn-save:hover { background: #b8943f; }
-    .btn-cancel { background: #e5e5e5; color: #333; }
-    .btn-cancel:hover { background: #ddd; }
-
-    .task-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-
-    .task-card {
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-left: 4px solid #C9A84C;
-      border-radius: 10px;
-      padding: 12px 14px;
-      position: relative;
-    }
-
+    .task-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .task-card { background: #fff; border: 1px solid #e5e5e5; border-left: 4px solid #C9A84C; border-radius: 10px; padding: 12px 14px; position: relative; }
     .task-card.status-in-progress { border-left-color: #3498db; }
     .task-card.status-done { border-left-color: #27ae60; }
     .task-card.overdue { background: #fff5f5; }
-
-    .task-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
-
-    .task-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-      flex: 1;
-    }
-
-    .task-card-actions {
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .task-card-actions button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.85rem;
-      padding: 2px 4px;
-      opacity: 0.5;
-    }
-
+    .task-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .task-title { font-weight: 600; font-size: 0.95rem; flex: 1; }
+    .task-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .task-card-actions button { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 2px 4px; opacity: 0.5; }
     .task-card-actions button:hover { opacity: 1; }
-
-    .task-meta {
-      display: flex;
-      gap: 12px;
-      margin-top: 6px;
-      font-size: 0.8rem;
-      color: #777;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .overdue-badge {
-      background: #c0392b;
-      color: #fff;
-      font-size: 0.7rem;
-      padding: 1px 7px;
-      border-radius: 6px;
-      font-weight: 600;
-    }
-
-    .status-badge {
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-weight: 600;
-    }
-
+    .task-meta { display: flex; gap: 12px; margin-top: 6px; font-size: 0.8rem; color: #777; flex-wrap: wrap; align-items: center; }
+    .overdue-badge { background: #c0392b; color: #fff; font-size: 0.7rem; padding: 1px 7px; border-radius: 6px; font-weight: 600; }
+    .status-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
     .status-badge.pending { background: #fef3cd; color: #856404; }
     .status-badge.in-progress { background: #d1ecf1; color: #0c5460; }
     .status-badge.done { background: #d4edda; color: #155724; }
 
     /* Calendar */
     .calendar-section { margin-top: 8px; }
-
-    .cal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .cal-header h3 {
-      font-size: 1rem;
-      font-weight: 600;
-    }
-
-    .cal-header button {
-      background: #2C2C2C;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 6px 12px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.85rem;
-    }
-
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .cal-header h3 { font-size: 1rem; font-weight: 600; }
+    .cal-header button { background: #2C2C2C; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
     .cal-header button:hover { background: #444; }
-
-    .cal-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-    }
-
-    .cal-day-label {
-      text-align: center;
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: #999;
-      padding: 4px 0;
-    }
-
-    .cal-day {
-      text-align: center;
-      padding: 8px 2px 6px;
-      font-size: 0.85rem;
-      border-radius: 8px;
-      cursor: pointer;
-      min-height: 40px;
-      position: relative;
-    }
-
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-day-label { text-align: center; font-size: 0.7rem; font-weight: 600; color: #999; padding: 4px 0; }
+    .cal-day { text-align: center; padding: 8px 2px 6px; font-size: 0.85rem; border-radius: 8px; cursor: pointer; min-height: 40px; position: relative; }
     .cal-day:hover { background: #f5f5f5; }
     .cal-day.today { font-weight: 700; color: #C9A84C; }
-    .cal-day.empty { cursor: default; }
-    .cal-day.empty:hover { background: none; }
-
-    .cal-dot {
-      width: 5px;
-      height: 5px;
-      background: #C9A84C;
-      border-radius: 50%;
-      margin: 2px auto 0;
-    }
-
+    .cal-day.empty { cursor: default; } .cal-day.empty:hover { background: none; }
+    .cal-dot { width: 5px; height: 5px; background: #C9A84C; border-radius: 50%; margin: 2px auto 0; }
     .cal-day.has-overdue .cal-dot { background: #c0392b; }
-
-    .cal-popup {
-      display: none;
-      background: #f9f9f9;
-      border: 1px solid #e5e5e5;
-      border-radius: 10px;
-      padding: 12px;
-      margin-top: 8px;
-      margin-bottom: 8px;
-    }
-
+    .cal-popup { display: none; background: #f9f9f9; border: 1px solid #e5e5e5; border-radius: 10px; padding: 12px; margin-top: 8px; margin-bottom: 8px; }
     .cal-popup.open { display: block; }
-
-    .cal-popup h4 {
-      font-size: 0.85rem;
-      margin-bottom: 6px;
-      color: #666;
-    }
-
-    .cal-popup ul {
-      list-style: none;
-      font-size: 0.85rem;
-    }
-
-    .cal-popup li {
-      padding: 4px 0;
-      border-bottom: 1px solid #eee;
-    }
-
+    .cal-popup h4 { font-size: 0.85rem; margin-bottom: 6px; color: #666; }
+    .cal-popup ul { list-style: none; font-size: 0.85rem; }
+    .cal-popup li { padding: 4px 0; border-bottom: 1px solid #eee; }
     .cal-popup li:last-child { border-bottom: none; }
   </style>
 </head>
@@ -527,7 +266,6 @@
       <h1>Ranch Hand</h1>
       <p>Capitol Cowboys Operations</p>
     </div>
-    <button id="clear-chat">Clear Chat</button>
   </header>
 
   <div class="tab-nav">
@@ -537,6 +275,9 @@
 
   <!-- Chat Tab -->
   <div id="chat-tab" class="tab-content active">
+    <div class="conv-bar" id="conv-bar">
+      <button class="conv-new" id="conv-new" title="New chat">+</button>
+    </div>
     <div id="chat"></div>
     <div id="input-bar">
       <textarea id="input" rows="1" placeholder="Type a message..." autocomplete="off"></textarea>
@@ -550,19 +291,14 @@
     <div id="tasks-view">
       <div class="summary-bar" id="summary-bar"></div>
       <button class="add-task-btn" id="add-task-btn">+ Add Task</button>
-
       <div class="task-form" id="task-form">
         <label>Task</label>
         <input type="text" id="tf-title" placeholder="What needs to be done?">
         <label>Assign To</label>
         <select id="tf-assignee">
           <option value="">Select member</option>
-          <option>Grant</option>
-          <option>Patrick</option>
-          <option>Aaron</option>
-          <option>Cesar</option>
-          <option>Jon Michael</option>
-          <option>Julian</option>
+          <option>Grant</option><option>Patrick</option><option>Aaron</option>
+          <option>Cesar</option><option>Jon Michael</option><option>Julian</option>
         </select>
         <label>Due Date</label>
         <input type="date" id="tf-due">
@@ -578,9 +314,7 @@
           <button class="btn-cancel" id="tf-cancel">Cancel</button>
         </div>
       </div>
-
       <div class="task-cards" id="task-cards"></div>
-
       <div class="calendar-section">
         <div class="cal-header">
           <button id="cal-prev">&larr;</button>
@@ -600,7 +334,6 @@
     // ── Tab Navigation ──
     const tabBtns = document.querySelectorAll('.tab-nav button');
     const tabContents = document.querySelectorAll('.tab-content');
-
     tabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         tabBtns.forEach(b => b.classList.remove('active'));
@@ -610,24 +343,167 @@
       });
     });
 
-    // ── Chat ──
-    const chat = document.getElementById('chat');
-    const input = document.getElementById('input');
+    // ── Multi-Conversation Chat ──
+    const chatEl = document.getElementById('chat');
+    const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('send');
+    const convBar = document.getElementById('conv-bar');
+    const convNewBtn = document.getElementById('conv-new');
 
-    let messages = [];
+    let conversations = {};   // { id: { name, messages: [] } }
+    let activeConvId = null;
     let sending = false;
 
-    input.addEventListener('input', () => {
-      input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    const GREETING = "Hey \u2014 I'm Ranch Hand. What do you need?";
+
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+
+    function loadConversations() {
+      try {
+        const raw = localStorage.getItem('rh_convos');
+        if (raw) {
+          const data = JSON.parse(raw);
+          conversations = data.conversations || {};
+          activeConvId = data.activeId || null;
+          // Migrate old single-chat format
+          if (Object.keys(conversations).length === 0) {
+            const oldMsgs = JSON.parse(localStorage.getItem('rh_messages') || '[]');
+            if (oldMsgs.length > 0) {
+              const id = genId();
+              const firstUser = oldMsgs.find(m => m.role === 'user');
+              conversations[id] = { name: firstUser ? firstUser.content.slice(0, 30) : 'Chat', messages: oldMsgs };
+              activeConvId = id;
+            }
+          }
+        } else {
+          // Try migrating old single-conversation localStorage
+          const oldMsgs = JSON.parse(localStorage.getItem('rh_messages') || '[]');
+          if (oldMsgs.length > 0) {
+            const id = genId();
+            const firstUser = oldMsgs.find(m => m.role === 'user');
+            conversations[id] = { name: firstUser ? firstUser.content.slice(0, 30) : 'Chat', messages: oldMsgs };
+            activeConvId = id;
+          }
+        }
+      } catch {}
+
+      if (Object.keys(conversations).length === 0) {
+        createConversation();
+      } else if (!activeConvId || !conversations[activeConvId]) {
+        activeConvId = Object.keys(conversations)[0];
+      }
+    }
+
+    function saveConversations() {
+      localStorage.setItem('rh_convos', JSON.stringify({ conversations, activeId: activeConvId }));
+    }
+
+    function createConversation() {
+      const id = genId();
+      conversations[id] = { name: 'New Chat', messages: [{ role: 'assistant', content: GREETING }] };
+      activeConvId = id;
+      saveConversations();
+      renderConvTabs();
+      renderChat();
+      return id;
+    }
+
+    function switchConversation(id) {
+      if (!conversations[id]) return;
+      activeConvId = id;
+      saveConversations();
+      renderConvTabs();
+      renderChat();
+    }
+
+    function closeConversation(id) {
+      delete conversations[id];
+      if (activeConvId === id) {
+        const keys = Object.keys(conversations);
+        if (keys.length === 0) {
+          createConversation();
+          return;
+        }
+        activeConvId = keys[keys.length - 1];
+      }
+      saveConversations();
+      renderConvTabs();
+      renderChat();
+    }
+
+    function renderConvTabs() {
+      const existing = convBar.querySelectorAll('.conv-tab');
+      existing.forEach(el => el.remove());
+
+      const ids = Object.keys(conversations);
+      ids.forEach(id => {
+        const conv = conversations[id];
+        const tab = document.createElement('button');
+        tab.className = 'conv-tab' + (id === activeConvId ? ' active' : '');
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = conv.name.length > 20 ? conv.name.slice(0, 20) + '...' : conv.name;
+        tab.appendChild(nameSpan);
+
+        if (ids.length > 1) {
+          const closeBtn = document.createElement('span');
+          closeBtn.className = 'close-conv';
+          closeBtn.textContent = '\u00d7';
+          closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeConversation(id); });
+          tab.appendChild(closeBtn);
+        }
+
+        tab.addEventListener('click', () => switchConversation(id));
+        convBar.insertBefore(tab, convNewBtn);
+      });
+    }
+
+    function renderChat() {
+      chatEl.innerHTML = '';
+      const conv = conversations[activeConvId];
+      if (!conv) return;
+      conv.messages.forEach(m => appendMessage(m.role, m.content));
+    }
+
+    function appendMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.innerHTML = renderMarkdown(content);
+      chatEl.appendChild(div);
+      chatEl.scrollTop = chatEl.scrollHeight;
+      return div;
+    }
+
+    function showTyping() {
+      const div = document.createElement('div');
+      div.className = 'typing'; div.id = 'typing';
+      div.innerHTML = '<span></span><span></span><span></span>';
+      chatEl.appendChild(div);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function hideTyping() { const el = document.getElementById('typing'); if (el) el.remove(); }
+
+    // Auto-name conversation from first user message
+    function maybeNameConversation(text) {
+      const conv = conversations[activeConvId];
+      if (!conv) return;
+      const userCount = conv.messages.filter(m => m.role === 'user').length;
+      if (userCount === 1) {
+        conv.name = text.slice(0, 35) + (text.length > 35 ? '...' : '');
+        saveConversations();
+        renderConvTabs();
+      }
+    }
+
+    convNewBtn.addEventListener('click', () => createConversation());
+
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
     });
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        send();
-      }
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
     });
 
     sendBtn.addEventListener('click', send);
@@ -635,129 +511,43 @@
     // Speech-to-text
     const micBtn = document.getElementById('mic-btn');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
     if (SpeechRecognition) {
       micBtn.style.display = 'block';
-      let listening = false;
-      let recognition = null;
+      let listening = false, recognition = null;
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
       function createRecognition() {
         const r = new SpeechRecognition();
-        r.lang = 'en-US';
-        r.interimResults = false;
-        r.continuous = isIOS ? false : true;
-
+        r.lang = 'en-US'; r.interimResults = false; r.continuous = isIOS ? false : true;
         r.addEventListener('result', (e) => {
           let transcript = '';
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            if (e.results[i].isFinal) {
-              transcript += e.results[i][0].transcript;
-            }
-          }
-          if (transcript) {
-            const current = input.value;
-            input.value = current + (current ? ' ' : '') + transcript.trim();
-            input.dispatchEvent(new Event('input'));
-            input.focus();
-          }
+          for (let i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) transcript += e.results[i][0].transcript; }
+          if (transcript) { inputEl.value += (inputEl.value ? ' ' : '') + transcript.trim(); inputEl.dispatchEvent(new Event('input')); inputEl.focus(); }
         });
-
-        r.addEventListener('end', () => {
-          listening = false;
-          micBtn.classList.remove('active');
-          recognition = null;
-        });
-
-        r.addEventListener('error', () => {
-          listening = false;
-          micBtn.classList.remove('active');
-          recognition = null;
-        });
-
+        r.addEventListener('end', () => { listening = false; micBtn.classList.remove('active'); recognition = null; });
+        r.addEventListener('error', () => { listening = false; micBtn.classList.remove('active'); recognition = null; });
         return r;
       }
-
       micBtn.addEventListener('click', () => {
-        if (listening && recognition) {
-          recognition.stop();
-        } else {
-          recognition = createRecognition();
-          recognition.start();
-          listening = true;
-          micBtn.classList.add('active');
-        }
+        if (listening && recognition) { recognition.stop(); }
+        else { recognition = createRecognition(); recognition.start(); listening = true; micBtn.classList.add('active'); }
       });
     }
 
-    function saveMessages() {
-      localStorage.setItem('rh_messages', JSON.stringify(messages));
-    }
-
-    function loadMessages() {
-      try { return JSON.parse(localStorage.getItem('rh_messages') || '[]'); }
-      catch { return []; }
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      const saved = loadMessages();
-      if (saved.length > 0) {
-        messages = saved;
-        messages.forEach(m => appendMessage(m.role, m.content));
-      } else {
-        const greeting = "Hey \u2014 I'm Ranch Hand. What do you need?";
-        messages.push({ role: 'assistant', content: greeting });
-        appendMessage('assistant', greeting);
-        saveMessages();
-      }
-      renderTasks();
-      renderCalendar();
-    });
-
-    document.getElementById('clear-chat').addEventListener('click', () => {
-      messages = [];
-      localStorage.removeItem('rh_messages');
-      chat.innerHTML = '';
-      const greeting = "Hey \u2014 I'm Ranch Hand. What do you need?";
-      messages.push({ role: 'assistant', content: greeting });
-      appendMessage('assistant', greeting);
-      saveMessages();
-    });
-
-    function appendMessage(role, content) {
-      const div = document.createElement('div');
-      div.className = `msg ${role}`;
-      div.innerHTML = renderMarkdown(content);
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-      return div;
-    }
-
-    function showTyping() {
-      const div = document.createElement('div');
-      div.className = 'typing';
-      div.id = 'typing';
-      div.innerHTML = '<span></span><span></span><span></span>';
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    function hideTyping() {
-      const el = document.getElementById('typing');
-      if (el) el.remove();
-    }
-
     async function send() {
-      const text = input.value.trim();
+      const text = inputEl.value.trim();
       if (!text || sending) return;
+
+      const conv = conversations[activeConvId];
+      if (!conv) return;
 
       sending = true;
       sendBtn.disabled = true;
-      input.value = '';
-      input.style.height = 'auto';
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
 
-      messages.push({ role: 'user', content: text });
-      saveMessages();
+      conv.messages.push({ role: 'user', content: text });
+      saveConversations();
+      maybeNameConversation(text);
       appendMessage('user', text);
       showTyping();
 
@@ -768,7 +558,7 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages }),
+          body: JSON.stringify({ messages: conv.messages }),
         });
 
         const reader = res.body.getReader();
@@ -778,28 +568,21 @@
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
           buffer = lines.pop();
-
           for (const line of lines) {
             if (!line.startsWith('data: ')) continue;
             const payload = line.slice(6);
             if (payload === '[DONE]') continue;
-
             try {
               const data = JSON.parse(payload);
               if (data.text) {
-                if (!assistantDiv) {
-                  hideTyping();
-                  assistantDiv = appendMessage('assistant', '');
-                }
+                if (!assistantDiv) { hideTyping(); assistantDiv = appendMessage('assistant', ''); }
                 assistantText += data.text;
-                // Hide the raw tasks JSON block from display
                 const displayText = assistantText.replace(/```tasks\s*\n[\s\S]*?```/g, '');
                 assistantDiv.innerHTML = renderMarkdown(displayText);
-                chat.scrollTop = chat.scrollHeight;
+                chatEl.scrollTop = chatEl.scrollHeight;
               }
               if (data.tasksCreated) {
                 const count = data.tasksCreated.length;
@@ -808,8 +591,8 @@
                 notice.style.background = '#e8f5e9';
                 notice.style.borderLeft = '4px solid #27ae60';
                 notice.innerHTML = `<p><strong>${count} task${count !== 1 ? 's' : ''} created in the Tasks tab.</strong></p>`;
-                chat.appendChild(notice);
-                chat.scrollTop = chat.scrollHeight;
+                chatEl.appendChild(notice);
+                chatEl.scrollTop = chatEl.scrollHeight;
               }
             } catch {}
           }
@@ -822,27 +605,32 @@
 
       hideTyping();
       if (assistantText) {
-        // Strip tasks JSON block before saving to history
         const cleanText = assistantText.replace(/```tasks\s*\n[\s\S]*?```/g, '').trim();
-        messages.push({ role: 'assistant', content: cleanText });
-        saveMessages();
+        conv.messages.push({ role: 'assistant', content: cleanText });
+        saveConversations();
 
-        // Detect task assignment in chat response
         const assignMatch = assistantText.match(/ASSIGNED TO:\s*(.+)/i);
         if (assignMatch) {
           const assignee = assignMatch[1].trim().split(/[,\n]/)[0].trim();
           const taskMatch = assistantText.match(/TASK:\s*(.+)/i);
           const dueMatch = assistantText.match(/DUE(?:\s*DATE)?:\s*(.+)/i);
-          const task = taskMatch ? taskMatch[1].trim() : 'Task from chat';
-          const due = dueMatch ? dueMatch[1].trim() : '';
-          sendTaskEmail(assignee, task, due);
+          sendTaskEmail(assignee, taskMatch ? taskMatch[1].trim() : 'Task from chat', dueMatch ? dueMatch[1].trim() : '');
         }
       }
 
       sending = false;
       sendBtn.disabled = false;
-      input.focus();
+      inputEl.focus();
     }
+
+    // ── Init ──
+    window.addEventListener('DOMContentLoaded', () => {
+      loadConversations();
+      renderConvTabs();
+      renderChat();
+      renderTasks();
+      renderCalendar();
+    });
 
     function renderMarkdown(text) {
       let html = escapeHtml(text);
@@ -863,45 +651,34 @@
       return `<p>${html}</p>`;
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
+    function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
     // ── Task Tracker ──
     const MEMBERS = ['Grant', 'Patrick', 'Aaron', 'Cesar', 'Jon Michael', 'Julian'];
     let cachedTasks = [];
 
     async function fetchTasks() {
-      try {
-        const res = await fetch('/api/tasks');
-        cachedTasks = await res.json();
-      } catch { cachedTasks = []; }
+      try { const res = await fetch('/api/tasks'); cachedTasks = await res.json(); } catch { cachedTasks = []; }
       return cachedTasks;
     }
 
     function isOverdue(task) {
       const status = task.status || '';
       if (status.toLowerCase() === 'done' || !task.due_date) return false;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
       return new Date(task.due_date + 'T00:00:00') < today;
     }
 
     function formatDate(dateStr) {
       if (!dateStr) return '';
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
     function renderSummary() {
-      const tasks = cachedTasks;
-      const total = tasks.length;
-      const done = tasks.filter(t => (t.status || '').toLowerCase() === 'done').length;
-      const overdue = tasks.filter(t => isOverdue(t)).length;
-      const bar = document.getElementById('summary-bar');
-      bar.innerHTML = `
+      const total = cachedTasks.length;
+      const done = cachedTasks.filter(t => (t.status || '').toLowerCase() === 'done').length;
+      const overdue = cachedTasks.filter(t => isOverdue(t)).length;
+      document.getElementById('summary-bar').innerHTML = `
         <div class="summary-item">Total: ${total}</div>
         <div class="summary-item">Done: ${done}</div>
         ${overdue > 0 ? `<div class="summary-item overdue">Overdue: ${overdue}</div>` : ''}
@@ -909,47 +686,35 @@
     }
 
     function renderTaskCards() {
-      const tasks = cachedTasks;
       const container = document.getElementById('task-cards');
-      if (tasks.length === 0) {
-        container.innerHTML = '<p style="color:#999;font-size:0.9rem;">No tasks yet. Add one above.</p>';
-        return;
-      }
-
+      if (cachedTasks.length === 0) { container.innerHTML = '<p style="color:#999;font-size:0.9rem;">No tasks yet. Add one above.</p>'; return; }
       const statusMap = { 'pending': 0, 'in-progress': 1, 'done': 2 };
-      const sorted = [...tasks].sort((a, b) => (statusMap[a.status] || 0) - (statusMap[b.status] || 0));
-
+      const sorted = [...cachedTasks].sort((a, b) => (statusMap[a.status] || 0) - (statusMap[b.status] || 0));
       container.innerHTML = sorted.map(t => {
         const overdue = isOverdue(t);
         const s = (t.status || 'pending').toLowerCase();
         const statusClass = s === 'in-progress' ? 'status-in-progress' : s === 'done' ? 'status-done' : '';
         const badgeClass = s === 'in-progress' ? 'in-progress' : s === 'done' ? 'done' : 'pending';
         const displayStatus = s === 'in-progress' ? 'In Progress' : s === 'done' ? 'Done' : 'Pending';
-        return `
-          <div class="task-card ${statusClass} ${overdue ? 'overdue' : ''}">
-            <div class="task-card-header">
-              <div class="task-title">${escapeHtml(t.title)}</div>
-              <div class="task-card-actions">
-                <button onclick="editTask(${t.id})" title="Edit">&#9998;</button>
-                <button onclick="deleteTask(${t.id})" title="Delete">&#10005;</button>
-              </div>
-            </div>
-            <div class="task-meta">
-              <span>${escapeHtml(t.assigned_to || 'Unassigned')}</span>
-              <span>${t.due_date ? formatDate(t.due_date) : 'No due date'}</span>
-              <span class="status-badge ${badgeClass}">${displayStatus}</span>
-              ${overdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
+        return `<div class="task-card ${statusClass} ${overdue ? 'overdue' : ''}">
+          <div class="task-card-header">
+            <div class="task-title">${escapeHtml(t.title)}</div>
+            <div class="task-card-actions">
+              <button onclick="editTask(${t.id})" title="Edit">&#9998;</button>
+              <button onclick="deleteTask(${t.id})" title="Delete">&#10005;</button>
             </div>
           </div>
-        `;
+          <div class="task-meta">
+            <span>${escapeHtml(t.assigned_to || 'Unassigned')}</span>
+            <span>${t.due_date ? formatDate(t.due_date) : 'No due date'}</span>
+            <span class="status-badge ${badgeClass}">${displayStatus}</span>
+            ${overdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
+          </div>
+        </div>`;
       }).join('');
     }
 
-    async function renderTasks() {
-      await fetchTasks();
-      renderSummary();
-      renderTaskCards();
-    }
+    async function renderTasks() { await fetchTasks(); renderSummary(); renderTaskCards(); }
 
     // Form
     const addTaskBtn = document.getElementById('add-task-btn');
@@ -960,100 +725,46 @@
     const tfStatus = document.getElementById('tf-status');
     const tfEditId = document.getElementById('tf-edit-id');
 
-    addTaskBtn.addEventListener('click', () => {
-      tfEditId.value = '';
-      tfTitle.value = '';
-      tfAssignee.value = '';
-      tfDue.value = '';
-      tfStatus.value = 'Pending';
-      taskForm.classList.add('open');
-      tfTitle.focus();
-    });
+    addTaskBtn.addEventListener('click', () => { tfEditId.value = ''; tfTitle.value = ''; tfAssignee.value = ''; tfDue.value = ''; tfStatus.value = 'Pending'; taskForm.classList.add('open'); tfTitle.focus(); });
+    document.getElementById('tf-cancel').addEventListener('click', () => taskForm.classList.remove('open'));
 
-    document.getElementById('tf-cancel').addEventListener('click', () => {
-      taskForm.classList.remove('open');
-    });
-
-    // Email notification helper
     function sendTaskEmail(assignee, task, dueDate) {
       if (!assignee) return;
-      fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignee, task, dueDate: dueDate || '', assignedBy: 'Ranch Hand Tasks' }),
-      })
-      .then(r => r.json())
-      .then(data => console.log('Email result:', data))
-      .catch(err => console.error('Email error:', err));
+      fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assignee, task, dueDate: dueDate || '', assignedBy: 'Ranch Hand Tasks' }) })
+      .then(r => r.json()).then(data => console.log('Email result:', data)).catch(err => console.error('Email error:', err));
     }
 
     document.getElementById('tf-save').addEventListener('click', async () => {
       const title = tfTitle.value.trim();
       if (!title) return;
-
       const editId = tfEditId.value;
       const isNew = !editId;
       const statusMap = { 'Pending': 'pending', 'In Progress': 'in-progress', 'Done': 'done' };
-      const payload = {
-        title,
-        assigned_to: tfAssignee.value,
-        due_date: tfDue.value,
-        status: statusMap[tfStatus.value] || 'pending',
-      };
-
+      const payload = { title, assigned_to: tfAssignee.value, due_date: tfDue.value, status: statusMap[tfStatus.value] || 'pending' };
       try {
-        if (editId) {
-          await fetch(`/api/tasks/${editId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-        } else {
-          await fetch('/api/tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-        }
+        if (editId) { await fetch(`/api/tasks/${editId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
+        else { await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
       } catch {}
-
       taskForm.classList.remove('open');
-      await renderTasks();
-      renderCalendar();
-
-      if (isNew && tfAssignee.value) {
-        sendTaskEmail(tfAssignee.value, title, tfDue.value);
-      }
+      await renderTasks(); renderCalendar();
+      if (isNew && tfAssignee.value) sendTaskEmail(tfAssignee.value, title, tfDue.value);
     });
 
     window.editTask = function(id) {
-      const t = cachedTasks.find(t => t.id === id);
-      if (!t) return;
-      const statusMap = { 'pending': 'Pending', 'in-progress': 'In Progress', 'done': 'Done' };
-      tfEditId.value = t.id;
-      tfTitle.value = t.title;
-      tfAssignee.value = t.assigned_to;
-      tfDue.value = t.due_date;
-      tfStatus.value = statusMap[t.status] || 'Pending';
-      taskForm.classList.add('open');
-      tfTitle.focus();
+      const t = cachedTasks.find(t => t.id === id); if (!t) return;
+      const sm = { 'pending': 'Pending', 'in-progress': 'In Progress', 'done': 'Done' };
+      tfEditId.value = t.id; tfTitle.value = t.title; tfAssignee.value = t.assigned_to; tfDue.value = t.due_date; tfStatus.value = sm[t.status] || 'Pending';
+      taskForm.classList.add('open'); tfTitle.focus();
     };
 
     window.deleteTask = async function(id) {
-      try {
-        await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-      } catch {}
-      await renderTasks();
-      renderCalendar();
+      try { await fetch(`/api/tasks/${id}`, { method: 'DELETE' }); } catch {}
+      await renderTasks(); renderCalendar();
     };
 
     // ── Calendar ──
     let calYear, calMonth;
-    (function() {
-      const now = new Date();
-      calYear = now.getFullYear();
-      calMonth = now.getMonth();
-    })();
+    (function() { const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); })();
 
     const calGrid = document.getElementById('cal-grid');
     const calTitle = document.getElementById('cal-title');
@@ -1061,27 +772,16 @@
     const calPopupTitle = document.getElementById('cal-popup-title');
     const calPopupList = document.getElementById('cal-popup-list');
 
-    document.getElementById('cal-prev').addEventListener('click', () => {
-      calMonth--;
-      if (calMonth < 0) { calMonth = 11; calYear--; }
-      renderCalendar();
-    });
-
-    document.getElementById('cal-next').addEventListener('click', () => {
-      calMonth++;
-      if (calMonth > 11) { calMonth = 0; calYear++; }
-      renderCalendar();
-    });
+    document.getElementById('cal-prev').addEventListener('click', () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); });
+    document.getElementById('cal-next').addEventListener('click', () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); });
 
     function renderCalendar() {
       const tasks = cachedTasks;
       const today = new Date();
       const firstDay = new Date(calYear, calMonth, 1).getDay();
       const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
       const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
       calTitle.textContent = `${monthNames[calMonth]} ${calYear}`;
-
       const tasksByDay = {};
       tasks.forEach(t => {
         if (!t.due_date) return;
@@ -1092,46 +792,27 @@
           tasksByDay[day].push(t);
         }
       });
-
       let html = '';
-      ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
-        html += `<div class="cal-day-label">${d}</div>`;
-      });
-
-      for (let i = 0; i < firstDay; i++) {
-        html += '<div class="cal-day empty"></div>';
-      }
-
+      ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => { html += `<div class="cal-day-label">${d}</div>`; });
+      for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
       for (let d = 1; d <= daysInMonth; d++) {
         const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
         const hasTasks = tasksByDay[d];
         const hasOverdue = hasTasks && hasTasks.some(t => isOverdue(t));
-        const classes = ['cal-day'];
-        if (isToday) classes.push('today');
-        if (hasOverdue) classes.push('has-overdue');
-
-        html += `<div class="${classes.join(' ')}" data-day="${d}">
-          ${d}
-          ${hasTasks ? '<div class="cal-dot"></div>' : ''}
-        </div>`;
+        const cls = ['cal-day']; if (isToday) cls.push('today'); if (hasOverdue) cls.push('has-overdue');
+        html += `<div class="${cls.join(' ')}" data-day="${d}">${d}${hasTasks ? '<div class="cal-dot"></div>' : ''}</div>`;
       }
-
       calGrid.innerHTML = html;
       calPopup.classList.remove('open');
-
       calGrid.querySelectorAll('.cal-day:not(.empty)').forEach(el => {
         el.addEventListener('click', () => {
           const day = parseInt(el.dataset.day);
           const dayTasks = tasksByDay[day];
-          if (!dayTasks || dayTasks.length === 0) {
-            calPopup.classList.remove('open');
-            return;
-          }
-          const dateStr = new Date(calYear, calMonth, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-          calPopupTitle.textContent = dateStr;
-          const statusDisplay = { 'pending': 'Pending', 'in-progress': 'In Progress', 'done': 'Done' };
+          if (!dayTasks || dayTasks.length === 0) { calPopup.classList.remove('open'); return; }
+          calPopupTitle.textContent = new Date(calYear, calMonth, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+          const sd = { 'pending': 'Pending', 'in-progress': 'In Progress', 'done': 'Done' };
           calPopupList.innerHTML = dayTasks.map(t =>
-            `<li><strong>${escapeHtml(t.title)}</strong> — ${escapeHtml(t.assigned_to || 'Unassigned')} <span class="status-badge ${t.status === 'in-progress' ? 'in-progress' : t.status === 'done' ? 'done' : 'pending'}" style="font-size:0.7rem;">${statusDisplay[t.status] || t.status}</span></li>`
+            `<li><strong>${escapeHtml(t.title)}</strong> — ${escapeHtml(t.assigned_to || 'Unassigned')} <span class="status-badge ${t.status === 'in-progress' ? 'in-progress' : t.status === 'done' ? 'done' : 'pending'}" style="font-size:0.7rem;">${sd[t.status] || t.status}</span></li>`
           ).join('');
           calPopup.classList.add('open');
         });
