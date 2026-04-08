@@ -7,6 +7,7 @@ const path = require('path');
 
 const { Resend } = require('resend');
 const initSqlJs = require('sql.js');
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -243,10 +244,93 @@ app.delete('/api/tasks/:id', (req, res) => {
   res.json({ deleted: true });
 });
 
+// ── Automated Task Reminders (daily at 9 AM ET) ──
+
+async function sendReminderEmail(task, type) {
+  if (!task.assigned_email || !process.env.RESEND_API_KEY) return;
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const isOverdue = type === 'overdue';
+
+  const subject = isOverdue
+    ? `Ranch Hand — OVERDUE: ${task.title}`
+    : `Ranch Hand — Reminder: ${task.title} is due soon`;
+
+  const heading = isOverdue
+    ? 'This task is overdue.'
+    : 'Heads up — this task is coming up.';
+
+  const tone = isOverdue
+    ? 'This needed to be done already. Get it across the finish line today.'
+    : 'You\'ve got less than 48 hours. Make sure this gets handled.';
+
+  const accentColor = isOverdue ? '#c0392b' : '#C9A84C';
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: task.assigned_email,
+      subject,
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+          <h2 style="color:${accentColor};margin-bottom:4px;">${heading}</h2>
+          <p style="color:#888;font-size:14px;margin-top:0;">Ranch Hand / Capitol Cowboys Operations</p>
+          <hr style="border:none;border-top:2px solid ${accentColor};margin:16px 0;">
+          <p><strong>Task:</strong> ${task.title}</p>
+          ${task.description ? `<p><strong>Details:</strong> ${task.description}</p>` : ''}
+          <p><strong>Assigned To:</strong> ${task.assigned_to}</p>
+          <p><strong>Due Date:</strong> ${task.due_date}</p>
+          <p style="margin-top:16px;color:#333;">${tone}</p>
+          <hr style="border:none;border-top:1px solid #eee;margin:16px 0;">
+          <p style="color:#999;font-size:12px;">— Ranch Hand, Capitol Cowboys Operations Assistant</p>
+        </div>
+      `,
+    });
+    console.log(`[Reminder] ${type} email sent to ${task.assigned_email} for: ${task.title}`);
+  } catch (err) {
+    console.error(`[Reminder] Failed to send ${type} email to ${task.assigned_email}:`, err.message);
+  }
+}
+
+function runDailyReminders() {
+  console.log('[Reminder] Running daily task check...');
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+
+  const twoDaysOut = new Date(today);
+  twoDaysOut.setDate(twoDaysOut.getDate() + 2);
+  const twoDaysStr = twoDaysOut.toISOString().split('T')[0];
+
+  // Tasks due within 48 hours that are still pending or in-progress
+  const upcoming = dbAll(
+    `SELECT * FROM tasks WHERE due_date != '' AND due_date >= ? AND due_date <= ? AND status IN ('pending', 'in-progress') AND assigned_email != ''`,
+    [todayStr, twoDaysStr]
+  );
+
+  // Tasks that are overdue (past due date, not done)
+  const overdue = dbAll(
+    `SELECT * FROM tasks WHERE due_date != '' AND due_date < ? AND status IN ('pending', 'in-progress') AND assigned_email != ''`,
+    [todayStr]
+  );
+
+  console.log(`[Reminder] Found ${upcoming.length} upcoming, ${overdue.length} overdue tasks`);
+
+  upcoming.forEach(task => sendReminderEmail(task, 'upcoming'));
+  overdue.forEach(task => sendReminderEmail(task, 'overdue'));
+}
+
 initDb().then(() => {
   app.listen(PORT, () => {
     console.log(`Ranch Hand running on http://localhost:${PORT}`);
   });
+
+  // Run daily at 9:00 AM (server time)
+  cron.schedule('0 9 * * *', () => {
+    runDailyReminders();
+  });
+  console.log('[Reminder] Daily reminder cron scheduled for 9:00 AM');
 }).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);
