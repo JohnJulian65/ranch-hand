@@ -321,16 +321,142 @@ function runDailyReminders() {
   overdue.forEach(task => sendReminderEmail(task, 'overdue'));
 }
 
+// ── Weekly Digest (Mondays at 8 AM) ──
+
+function formatDateNice(dateStr) {
+  if (!dateStr) return 'No date';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function taskRow(task) {
+  return `<tr>
+    <td style="padding:6px 10px;border-bottom:1px solid #eee;">${task.title}</td>
+    <td style="padding:6px 10px;border-bottom:1px solid #eee;">${task.assigned_to || 'Unassigned'}</td>
+    <td style="padding:6px 10px;border-bottom:1px solid #eee;">${formatDateNice(task.due_date)}</td>
+  </tr>`;
+}
+
+function taskSection(title, tasks, color, emptyMsg) {
+  if (tasks.length === 0) {
+    return `<h3 style="color:${color};margin:20px 0 6px;">${title}</h3>
+      <p style="color:#999;font-size:14px;">${emptyMsg}</p>`;
+  }
+  return `<h3 style="color:${color};margin:20px 0 6px;">${title} (${tasks.length})</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <tr style="background:#f5f5f5;">
+        <th style="padding:6px 10px;text-align:left;">Task</th>
+        <th style="padding:6px 10px;text-align:left;">Owner</th>
+        <th style="padding:6px 10px;text-align:left;">Due</th>
+      </tr>
+      ${tasks.map(taskRow).join('')}
+    </table>`;
+}
+
+async function sendWeeklyDigest() {
+  const emails = (process.env.LEADERSHIP_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+  if (emails.length === 0 || !process.env.RESEND_API_KEY) {
+    console.log('[Digest] No LEADERSHIP_EMAILS or RESEND_API_KEY configured, skipping');
+    return;
+  }
+
+  console.log('[Digest] Compiling weekly digest...');
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+
+  // End of this week (Sunday)
+  const endOfWeek = new Date(today);
+  endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()));
+  const endOfWeekStr = endOfWeek.toISOString().split('T')[0];
+
+  // 7 days ago
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+  const dueThisWeek = dbAll(
+    `SELECT * FROM tasks WHERE due_date >= ? AND due_date <= ? AND status IN ('pending', 'in-progress') ORDER BY due_date ASC`,
+    [todayStr, endOfWeekStr]
+  );
+
+  const overdue = dbAll(
+    `SELECT * FROM tasks WHERE due_date != '' AND due_date < ? AND status IN ('pending', 'in-progress') ORDER BY due_date ASC`,
+    [todayStr]
+  );
+
+  const completed = dbAll(
+    `SELECT * FROM tasks WHERE status = 'done' AND due_date >= ? ORDER BY due_date ASC`,
+    [sevenDaysAgoStr]
+  );
+
+  const totalActive = dbAll(`SELECT * FROM tasks WHERE status IN ('pending', 'in-progress')`).length;
+
+  const mondayDate = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+  const html = `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+      <div style="background:#2C2C2C;color:#fff;padding:18px 20px;border-radius:12px 12px 0 0;">
+        <h1 style="color:#C9A84C;margin:0;font-size:20px;">Ranch Hand — Weekly Briefing</h1>
+        <p style="color:#aaa;margin:4px 0 0;font-size:13px;">${mondayDate}</p>
+      </div>
+
+      <div style="border:1px solid #e5e5e5;border-top:none;border-radius:0 0 12px 12px;padding:20px;">
+        <p style="font-size:15px;color:#333;margin-top:0;">Here's where things stand this week. <strong>${totalActive}</strong> active task${totalActive !== 1 ? 's' : ''} across the board.</p>
+
+        ${overdue.length > 0
+          ? `<div style="background:#fff5f5;border-left:4px solid #c0392b;padding:10px 14px;margin:12px 0;border-radius:4px;">
+              <strong style="color:#c0392b;">${overdue.length} task${overdue.length !== 1 ? 's are' : ' is'} overdue.</strong> These need attention today.
+            </div>`
+          : `<div style="background:#f0faf0;border-left:4px solid #27ae60;padding:10px 14px;margin:12px 0;border-radius:4px;">
+              <strong style="color:#27ae60;">No overdue tasks.</strong> Clean slate.
+            </div>`
+        }
+
+        ${taskSection('Overdue', overdue, '#c0392b', '')}
+        ${taskSection('Due This Week', dueThisWeek, '#C9A84C', 'Nothing due this week.')}
+        ${taskSection('Completed (Last 7 Days)', completed, '#27ae60', 'No tasks completed this past week.')}
+
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0 12px;">
+        <p style="color:#999;font-size:12px;margin:0;">— Ranch Hand, Capitol Cowboys Operations Assistant</p>
+      </div>
+    </div>
+  `;
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  for (const email of emails) {
+    try {
+      await resend.emails.send({
+        from: FROM_ADDRESS,
+        to: email,
+        subject: `Ranch Hand — Weekly Briefing: ${mondayDate}`,
+        html,
+      });
+      console.log(`[Digest] Sent weekly digest to ${email}`);
+    } catch (err) {
+      console.error(`[Digest] Failed to send digest to ${email}:`, err.message);
+    }
+  }
+}
+
 initDb().then(() => {
   app.listen(PORT, () => {
     console.log(`Ranch Hand running on http://localhost:${PORT}`);
   });
 
-  // Run daily at 9:00 AM (server time)
+  // Daily reminders at 9:00 AM
   cron.schedule('0 9 * * *', () => {
     runDailyReminders();
   });
   console.log('[Reminder] Daily reminder cron scheduled for 9:00 AM');
+
+  // Weekly digest every Monday at 8:00 AM
+  cron.schedule('0 8 * * 1', () => {
+    sendWeeklyDigest();
+  });
+  console.log('[Digest] Weekly digest cron scheduled for Mondays at 8:00 AM');
 }).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);
