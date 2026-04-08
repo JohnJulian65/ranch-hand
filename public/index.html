@@ -857,21 +857,22 @@
 
     // ── Task Tracker ──
     const MEMBERS = ['Grant', 'Patrick', 'Aaron', 'Cesar', 'Jon Michael', 'Julian'];
+    let cachedTasks = [];
 
-    function getTasks() {
-      try { return JSON.parse(localStorage.getItem('rh_tasks') || '[]'); }
-      catch { return []; }
-    }
-
-    function saveTasks(tasks) {
-      localStorage.setItem('rh_tasks', JSON.stringify(tasks));
+    async function fetchTasks() {
+      try {
+        const res = await fetch('/api/tasks');
+        cachedTasks = await res.json();
+      } catch { cachedTasks = []; }
+      return cachedTasks;
     }
 
     function isOverdue(task) {
-      if (task.status === 'Done' || !task.due) return false;
+      const status = task.status || '';
+      if (status.toLowerCase() === 'done' || !task.due_date) return false;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      return new Date(task.due + 'T00:00:00') < today;
+      return new Date(task.due_date + 'T00:00:00') < today;
     }
 
     function formatDate(dateStr) {
@@ -881,9 +882,9 @@
     }
 
     function renderSummary() {
-      const tasks = getTasks();
+      const tasks = cachedTasks;
       const total = tasks.length;
-      const done = tasks.filter(t => t.status === 'Done').length;
+      const done = tasks.filter(t => (t.status || '').toLowerCase() === 'done').length;
       const overdue = tasks.filter(t => isOverdue(t)).length;
       const bar = document.getElementById('summary-bar');
       bar.innerHTML = `
@@ -894,33 +895,35 @@
     }
 
     function renderTaskCards() {
-      const tasks = getTasks();
+      const tasks = cachedTasks;
       const container = document.getElementById('task-cards');
       if (tasks.length === 0) {
         container.innerHTML = '<p style="color:#999;font-size:0.9rem;">No tasks yet. Add one above.</p>';
         return;
       }
 
-      const statusOrder = { 'Pending': 0, 'In Progress': 1, 'Done': 2 };
-      const sorted = [...tasks].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+      const statusMap = { 'pending': 0, 'in-progress': 1, 'done': 2 };
+      const sorted = [...tasks].sort((a, b) => (statusMap[a.status] || 0) - (statusMap[b.status] || 0));
 
       container.innerHTML = sorted.map(t => {
         const overdue = isOverdue(t);
-        const statusClass = t.status === 'In Progress' ? 'status-in-progress' : t.status === 'Done' ? 'status-done' : '';
-        const badgeClass = t.status === 'In Progress' ? 'in-progress' : t.status === 'Done' ? 'done' : 'pending';
+        const s = (t.status || 'pending').toLowerCase();
+        const statusClass = s === 'in-progress' ? 'status-in-progress' : s === 'done' ? 'status-done' : '';
+        const badgeClass = s === 'in-progress' ? 'in-progress' : s === 'done' ? 'done' : 'pending';
+        const displayStatus = s === 'in-progress' ? 'In Progress' : s === 'done' ? 'Done' : 'Pending';
         return `
           <div class="task-card ${statusClass} ${overdue ? 'overdue' : ''}">
             <div class="task-card-header">
               <div class="task-title">${escapeHtml(t.title)}</div>
               <div class="task-card-actions">
-                <button onclick="editTask('${t.id}')" title="Edit">&#9998;</button>
-                <button onclick="deleteTask('${t.id}')" title="Delete">&#10005;</button>
+                <button onclick="editTask(${t.id})" title="Edit">&#9998;</button>
+                <button onclick="deleteTask(${t.id})" title="Delete">&#10005;</button>
               </div>
             </div>
             <div class="task-meta">
-              <span>${escapeHtml(t.assignee || 'Unassigned')}</span>
-              <span>${t.due ? formatDate(t.due) : 'No due date'}</span>
-              <span class="status-badge ${badgeClass}">${t.status}</span>
+              <span>${escapeHtml(t.assigned_to || 'Unassigned')}</span>
+              <span>${t.due_date ? formatDate(t.due_date) : 'No due date'}</span>
+              <span class="status-badge ${badgeClass}">${displayStatus}</span>
               ${overdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
             </div>
           </div>
@@ -928,7 +931,8 @@
       }).join('');
     }
 
-    function renderTasks() {
+    async function renderTasks() {
+      await fetchTasks();
       renderSummary();
       renderTaskCards();
     }
@@ -969,35 +973,38 @@
       .catch(err => console.error('Email error:', err));
     }
 
-    document.getElementById('tf-save').addEventListener('click', () => {
+    document.getElementById('tf-save').addEventListener('click', async () => {
       const title = tfTitle.value.trim();
       if (!title) return;
 
-      const tasks = getTasks();
       const editId = tfEditId.value;
       const isNew = !editId;
+      const statusMap = { 'Pending': 'pending', 'In Progress': 'in-progress', 'Done': 'done' };
+      const payload = {
+        title,
+        assigned_to: tfAssignee.value,
+        due_date: tfDue.value,
+        status: statusMap[tfStatus.value] || 'pending',
+      };
 
-      if (editId) {
-        const idx = tasks.findIndex(t => t.id === editId);
-        if (idx !== -1) {
-          tasks[idx].title = title;
-          tasks[idx].assignee = tfAssignee.value;
-          tasks[idx].due = tfDue.value;
-          tasks[idx].status = tfStatus.value;
+      try {
+        if (editId) {
+          await fetch(`/api/tasks/${editId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
         }
-      } else {
-        tasks.push({
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          title,
-          assignee: tfAssignee.value,
-          due: tfDue.value,
-          status: tfStatus.value,
-        });
-      }
+      } catch {}
 
-      saveTasks(tasks);
       taskForm.classList.remove('open');
-      renderTasks();
+      await renderTasks();
       renderCalendar();
 
       if (isNew && tfAssignee.value) {
@@ -1006,22 +1013,23 @@
     });
 
     window.editTask = function(id) {
-      const tasks = getTasks();
-      const t = tasks.find(t => t.id === id);
+      const t = cachedTasks.find(t => t.id === id);
       if (!t) return;
+      const statusMap = { 'pending': 'Pending', 'in-progress': 'In Progress', 'done': 'Done' };
       tfEditId.value = t.id;
       tfTitle.value = t.title;
-      tfAssignee.value = t.assignee;
-      tfDue.value = t.due;
-      tfStatus.value = t.status;
+      tfAssignee.value = t.assigned_to;
+      tfDue.value = t.due_date;
+      tfStatus.value = statusMap[t.status] || 'Pending';
       taskForm.classList.add('open');
       tfTitle.focus();
     };
 
-    window.deleteTask = function(id) {
-      const tasks = getTasks().filter(t => t.id !== id);
-      saveTasks(tasks);
-      renderTasks();
+    window.deleteTask = async function(id) {
+      try {
+        await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+      } catch {}
+      await renderTasks();
       renderCalendar();
     };
 
@@ -1052,7 +1060,7 @@
     });
 
     function renderCalendar() {
-      const tasks = getTasks();
+      const tasks = cachedTasks;
       const today = new Date();
       const firstDay = new Date(calYear, calMonth, 1).getDay();
       const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
@@ -1060,11 +1068,10 @@
       const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
       calTitle.textContent = `${monthNames[calMonth]} ${calYear}`;
 
-      // Build task map for this month
       const tasksByDay = {};
       tasks.forEach(t => {
-        if (!t.due) return;
-        const d = new Date(t.due + 'T00:00:00');
+        if (!t.due_date) return;
+        const d = new Date(t.due_date + 'T00:00:00');
         if (d.getFullYear() === calYear && d.getMonth() === calMonth) {
           const day = d.getDate();
           if (!tasksByDay[day]) tasksByDay[day] = [];
@@ -1108,8 +1115,9 @@
           }
           const dateStr = new Date(calYear, calMonth, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
           calPopupTitle.textContent = dateStr;
+          const statusDisplay = { 'pending': 'Pending', 'in-progress': 'In Progress', 'done': 'Done' };
           calPopupList.innerHTML = dayTasks.map(t =>
-            `<li><strong>${escapeHtml(t.title)}</strong> — ${escapeHtml(t.assignee || 'Unassigned')} <span class="status-badge ${t.status === 'In Progress' ? 'in-progress' : t.status === 'Done' ? 'done' : 'pending'}" style="font-size:0.7rem;">${t.status}</span></li>`
+            `<li><strong>${escapeHtml(t.title)}</strong> — ${escapeHtml(t.assigned_to || 'Unassigned')} <span class="status-badge ${t.status === 'in-progress' ? 'in-progress' : t.status === 'done' ? 'done' : 'pending'}" style="font-size:0.7rem;">${statusDisplay[t.status] || t.status}</span></li>`
           ).join('');
           calPopup.classList.add('open');
         });

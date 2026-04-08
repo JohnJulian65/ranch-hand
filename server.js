@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { Resend } = require('resend');
+const initSqlJs = require('sql.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,61 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
+// Initialize SQLite database
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+
+const DB_PATH = path.join(dataDir, 'tasks.db');
+let db;
+
+async function initDb() {
+  const SQL = await initSqlJs();
+  if (fs.existsSync(DB_PATH)) {
+    const buffer = fs.readFileSync(DB_PATH);
+    db = new SQL.Database(buffer);
+  } else {
+    db = new SQL.Database();
+  }
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      assigned_to TEXT DEFAULT '',
+      assigned_email TEXT DEFAULT '',
+      due_date TEXT DEFAULT '',
+      status TEXT DEFAULT 'pending',
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  saveDb();
+}
+
+function saveDb() {
+  const data = db.export();
+  fs.writeFileSync(DB_PATH, Buffer.from(data));
+}
+
+function dbAll(sql, params) {
+  const stmt = db.prepare(sql);
+  if (params) stmt.bind(params);
+  const rows = [];
+  while (stmt.step()) rows.push(stmt.getAsObject());
+  stmt.free();
+  return rows;
+}
+
+function dbGet(sql, params) {
+  const rows = dbAll(sql, params);
+  return rows[0] || null;
+}
+
+function dbRun(sql, params) {
+  db.run(sql, params);
+  saveDb();
+}
 
 // Member email directory
 const MEMBER_EMAILS = {
@@ -122,6 +178,76 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Ranch Hand running on http://localhost:${PORT}`);
+// ── Task API ──
+
+app.get('/api/tasks', (req, res) => {
+  const tasks = dbAll('SELECT * FROM tasks ORDER BY created_at DESC');
+  res.json(tasks);
+});
+
+app.post('/api/tasks', (req, res) => {
+  const { title, description, assigned_to, due_date, status } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ error: 'title is required' });
+  }
+
+  const assignedEmail = MEMBER_EMAILS[assigned_to] || '';
+  dbRun(
+    `INSERT INTO tasks (title, description, assigned_to, assigned_email, due_date, status)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [title, description || '', assigned_to || '', assignedEmail, due_date || '', status || 'pending']
+  );
+
+  const task = dbGet('SELECT * FROM tasks WHERE id = last_insert_rowid()');
+  res.json(task);
+});
+
+app.patch('/api/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  const { title, description, assigned_to, due_date, status } = req.body;
+
+  const existing = dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
+  if (!existing) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  const assignedEmail = assigned_to !== undefined
+    ? (MEMBER_EMAILS[assigned_to] || '')
+    : existing.assigned_email;
+
+  dbRun(
+    `UPDATE tasks SET title = ?, description = ?, assigned_to = ?, assigned_email = ?, due_date = ?, status = ? WHERE id = ?`,
+    [
+      title !== undefined ? title : existing.title,
+      description !== undefined ? description : existing.description,
+      assigned_to !== undefined ? assigned_to : existing.assigned_to,
+      assignedEmail,
+      due_date !== undefined ? due_date : existing.due_date,
+      status !== undefined ? status : existing.status,
+      Number(id)
+    ]
+  );
+
+  const updated = dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
+  res.json(updated);
+});
+
+app.delete('/api/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  const existing = dbGet('SELECT * FROM tasks WHERE id = ?', [Number(id)]);
+  if (!existing) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  dbRun('DELETE FROM tasks WHERE id = ?', [Number(id)]);
+  res.json({ deleted: true });
+});
+
+initDb().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Ranch Hand running on http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
+  process.exit(1);
 });
