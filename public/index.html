@@ -796,7 +796,19 @@
                   assistantDiv = appendMessage('assistant', '');
                 }
                 assistantText += data.text;
-                assistantDiv.innerHTML = renderMarkdown(assistantText);
+                // Hide the raw tasks JSON block from display
+                const displayText = assistantText.replace(/```tasks\s*\n[\s\S]*?```/g, '');
+                assistantDiv.innerHTML = renderMarkdown(displayText);
+                chat.scrollTop = chat.scrollHeight;
+              }
+              if (data.tasksCreated) {
+                const count = data.tasksCreated.length;
+                const notice = document.createElement('div');
+                notice.className = 'msg assistant';
+                notice.style.background = '#e8f5e9';
+                notice.style.borderLeft = '4px solid #27ae60';
+                notice.innerHTML = `<p><strong>${count} task${count !== 1 ? 's' : ''} created in the Tasks tab.</strong></p>`;
+                chat.appendChild(notice);
                 chat.scrollTop = chat.scrollHeight;
               }
             } catch {}
@@ -810,7 +822,9 @@
 
       hideTyping();
       if (assistantText) {
-        messages.push({ role: 'assistant', content: assistantText });
+        // Strip tasks JSON block before saving to history
+        const cleanText = assistantText.replace(/```tasks\s*\n[\s\S]*?```/g, '').trim();
+        messages.push({ role: 'assistant', content: cleanText });
         saveMessages();
 
         // Detect task assignment in chat response

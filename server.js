@@ -112,12 +112,40 @@ app.post('/api/chat', async (req, res) => {
       messages: messages,
     });
 
+    let fullResponse = '';
+
     for await (const event of stream) {
       if (
         event.type === 'content_block_delta' &&
         event.delta.type === 'text_delta'
       ) {
+        fullResponse += event.delta.text;
         res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`);
+      }
+    }
+
+    // Parse and create tasks from ```tasks JSON blocks
+    const tasksMatch = fullResponse.match(/```tasks\s*\n([\s\S]*?)```/);
+    if (tasksMatch) {
+      try {
+        const taskList = JSON.parse(tasksMatch[1]);
+        const created = [];
+        for (const t of taskList) {
+          if (!t.title) continue;
+          const assignedEmail = MEMBER_EMAILS[t.assigned_to] || '';
+          dbRun(
+            `INSERT INTO tasks (title, description, assigned_to, assigned_email, due_date, status)
+             VALUES (?, ?, ?, ?, ?, 'pending')`,
+            [t.title, t.description || '', t.assigned_to || '', assignedEmail, t.due_date || '']
+          );
+          created.push({ title: t.title, assigned_to: t.assigned_to, assigned_email: assignedEmail });
+        }
+        if (created.length > 0) {
+          console.log(`[Meeting] Created ${created.length} tasks from transcript`);
+          res.write(`data: ${JSON.stringify({ tasksCreated: created })}\n\n`);
+        }
+      } catch (parseErr) {
+        console.error('[Meeting] Failed to parse tasks JSON:', parseErr.message);
       }
     }
 
