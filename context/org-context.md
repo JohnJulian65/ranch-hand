@@ -41,37 +41,8 @@ UPCOMING EVENTS:
 SPONSORS:
 [PLACEHOLDER — sponsor list will be added here]
 
-ORGANIZATIONAL STRUCTURE (from Operating Agreement):
-
-Board of Directors: 7 elected voting members, serving up to two consecutive one-year terms.
-
-Officer Roles:
-- Chair: Chief executive, presides over meetings, appoints committees, principal spokesperson. Can delegate and take emergency actions between meetings.
-- Vice Chair: Assumes Chair duties when absent, coordinates Annual Meeting, records minutes, oversees finances/budgets/financial reporting. Also serves as Secretary and Treasurer.
-- Internal Affairs Officer: Internal compliance, grievances, member conduct (Code of Conduct), onboarding, advises Events Chair on recruiting events.
-- External Affairs Officer: Sponsors, partnerships, community outreach, business development, external representation.
-- Communications Officer: Internal/external comms, branding, newsletters, social media, promotional materials, media relations.
-- Social Officer: Member recruitment strategy, retention, maximizing event attendance, works with Events Officer.
-- Events Officer: Planning, logistics, execution of main and recruiting events. Venues, vendors, budgets, timelines.
-
-Membership:
-- Annual dues: $500/year
-- Active status requires paying dues + attending at least 2 main events and 1 recruiting event annually
-- Directors must attend at least 3 main events and 2 recruiting events per year
-- Cowboys Founder Board: Original founders, lifetime membership, exempt from dues, can veto Board actions by 2/3 vote
-
-Meetings:
-- Board meets monthly; special meetings with 7 days written notice
-- Quorum: majority of Directors present; simple majority vote for action
-- Robert's Rules of Order governs all meetings
-- Resolutions require 2/3 vote to pass; Chair sets agenda but Board can override veto by 2/3 vote
-
-Removal Process:
-- 3 violations of attendance/deliverables triggers removal proceedings
-- Any Board member can bring a case; Chair presides over hearing
-- Removal requires 2/3 (4 votes) majority
-
-No Political Activity: No support for political campaigns on behalf of any candidate.
+ORGANIZATIONAL STRUCTURE:
+The full Operating Agreement is loaded separately. Refer to it for all governance, membership, officer duties, advisor roles, removal processes, meeting rules, and bylaws.
 
 CODE OF CONDUCT (summary):
 - Members must conduct themselves professionally at all events, venues, online platforms
