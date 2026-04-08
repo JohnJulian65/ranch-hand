@@ -29,6 +29,15 @@ UPCOMING EVENTS:
    - Details: Post-Nationals game celebration. Private section with drink specials, cornhole games, tailgate style party. Baseball best dress code. Food available for individual purchase.
    - Attendance: 74 Going, 4 Maybe
 
+3. Capitol Cowboys' Derby Day (MAIN EVENT)
+   - Date: Saturday, May 2, 2026, 4:00 PM – 8:00 PM
+   - Venue: The Lawn at the Historic Hill Center, Washington, DC (rain or shine — covered tent)
+   - RSVP/Tickets: https://partiful.com/e/EAk0YD1wMFqzCxN8EQ3A
+   - Details: Annual Kentucky Derby celebration, Capitol-style. Live DJ and band. Open bar with beer, wine, seltzers, mint juleps and more. Hors d'oeuvres. Beautiful outdoor setting. Interactive entertainment, great music, Derby Day excitement against one of D.C.'s most iconic backdrops. Tickets required, space is limited.
+   - Dress Code: Derby-day flair / Southern charm
+   - Attendance: 202 On The List
+   - Note: This is the org's flagship annual event.
+
 SPONSORS:
 [PLACEHOLDER — sponsor list will be added here]
 
