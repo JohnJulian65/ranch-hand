@@ -97,12 +97,14 @@ async function initDb() {
 
 // Member email directory
 const MEMBER_EMAILS = {
-  'Grant': '',
-  'Patrick': '',
-  'Aaron': '',
-  'Cesar': 'cdager12@gmail.com',
-  'Jon Michael': '',
   'Julian': 'johnjvandaeleiii@gmail.com',
+  'Cesar': 'cdager12@gmail.com',
+  'Jon Michael': 'Jonmichaelraasch@gmail.com',
+  'Grant': 'grantgoerke@gmail.com',
+  'Nico': 'Numetin12@gmail.com',
+  'Patrick': 'patrickwortmann21@gmail.com',
+  'Tristan': 'tristanshakespeare@gmail.com',
+  'Aaron': 'aargeo17@gmail.com',
 };
 
 const FROM_ADDRESS = process.env.RESEND_FROM || 'onboarding@resend.dev';

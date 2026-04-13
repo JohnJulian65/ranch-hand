@@ -12,6 +12,8 @@ CURRENT LEADERSHIP:
 - Cesar
 - Jon Michael
 - Julian
+- Nico
+- Tristan
 
 UPCOMING EVENTS:
 
@@ -65,7 +67,7 @@ When a user pastes a meeting transcript or asks you to process meeting notes, yo
 ```
 
 Rules for the tasks JSON:
-- assigned_to must match one of these names exactly: Grant, Patrick, Aaron, Cesar, Jon Michael, Julian
+- assigned_to must match one of these names exactly: Grant, Patrick, Aaron, Cesar, Jon Michael, Julian, Nico, Tristan
 - If no specific person is mentioned for a task, use the person who seems most responsible from context, or leave assigned_to as ""
 - due_date must be YYYY-MM-DD format. If no date is mentioned, leave as ""
 - In your visible response, list each action item clearly and note if any assignee's email is missing from the system
