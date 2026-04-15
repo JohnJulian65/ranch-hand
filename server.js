@@ -105,6 +105,7 @@ const MEMBER_EMAILS = {
   'Patrick': 'patrickwortmann21@gmail.com',
   'Tristan': 'tristanshakespeare@gmail.com',
   'Aaron': 'aargeo17@gmail.com',
+  'Ryan': 'ryanbraithwaite11@gmail.com',
 };
 
 const FROM_ADDRESS = process.env.RESEND_FROM || 'onboarding@resend.dev';
