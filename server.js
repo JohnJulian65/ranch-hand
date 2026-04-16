@@ -19,7 +19,7 @@ app.use(express.static('public'));
 let dbAll, dbGet, dbRun;
 
 async function initDb() {
-  const CREATE_TABLE = `
+  const CREATE_TASKS_TABLE = `
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -29,6 +29,16 @@ async function initDb() {
       due_date TEXT DEFAULT '',
       status TEXT DEFAULT 'pending',
       created_at TEXT DEFAULT (datetime('now'))
+    )
+  `;
+
+  const CREATE_MEMORY_TABLE = `
+    CREATE TABLE IF NOT EXISTS conversation_memory (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
     )
   `;
 
@@ -52,7 +62,8 @@ async function initDb() {
       return await db.execute({ sql, args: params || [] });
     };
 
-    await db.execute(CREATE_TABLE);
+    await db.execute(CREATE_TASKS_TABLE);
+    await db.execute(CREATE_MEMORY_TABLE);
     console.log('[DB] Connected to Turso');
   } else {
     // Local dev: sql.js (in-memory with file persistence)
@@ -89,7 +100,8 @@ async function initDb() {
       return { lastInsertRowid: sqlDb.exec("SELECT last_insert_rowid()")[0]?.values[0]?.[0] };
     };
 
-    sqlDb.run(CREATE_TABLE);
+    sqlDb.run(CREATE_TASKS_TABLE);
+    sqlDb.run(CREATE_MEMORY_TABLE);
     saveDb();
     console.log('[DB] Using local sql.js at', DB_PATH);
   }
@@ -120,11 +132,46 @@ const systemPrompt = fs.readdirSync(contextDir)
 
 const client = new Anthropic();
 
+async function summarizeAndSave(sessionId, userMessage, assistantResponse) {
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 256,
+    messages: [{
+      role: 'user',
+      content: `Summarize this conversation exchange in 1-2 concise sentences. Focus on the key topic, any decisions made, and any action items. Do not include any preamble — just the summary.\n\nUser: ${userMessage}\n\nAssistant: ${assistantResponse.slice(0, 2000)}`
+    }],
+  });
+
+  const summary = response.content[0].text.trim();
+  await dbRun(
+    `INSERT INTO conversation_memory (session_id, summary) VALUES (?, ?)`,
+    [sessionId, summary]
+  );
+  console.log(`[Memory] Saved summary for session ${sessionId.slice(0, 8)}...`);
+}
+
 app.post('/api/chat', async (req, res) => {
-  const { messages } = req.body;
+  const { messages, session_id } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'messages array is required' });
+  }
+
+  // Build system prompt with conversation memory
+  let fullSystemPrompt = systemPrompt;
+  if (session_id) {
+    try {
+      const memories = await dbAll(
+        `SELECT * FROM conversation_memory WHERE session_id = ? ORDER BY created_at DESC LIMIT 5`,
+        [session_id]
+      );
+      if (memories.length > 0) {
+        const memoryBlock = memories.reverse().map(m => `- ${m.summary}`).join('\n');
+        fullSystemPrompt += `\n\n---\n\n## Conversation Memory\nHere are summaries of recent past conversations with this user. Use this context to provide continuity and remember what was previously discussed:\n${memoryBlock}`;
+      }
+    } catch (err) {
+      console.error('[Memory] Failed to load memory:', err.message);
+    }
   }
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -135,7 +182,7 @@ app.post('/api/chat', async (req, res) => {
     const stream = await client.messages.stream({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4096,
-      system: systemPrompt,
+      system: fullSystemPrompt,
       messages: messages,
     });
 
@@ -178,6 +225,16 @@ app.post('/api/chat', async (req, res) => {
 
     res.write('data: [DONE]\n\n');
     res.end();
+
+    // Async: summarize and save conversation memory
+    if (session_id && fullResponse) {
+      const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+      if (lastUserMsg) {
+        summarizeAndSave(session_id, lastUserMsg.content, fullResponse).catch(err =>
+          console.error('[Memory] Summary failed:', err.message)
+        );
+      }
+    }
   } catch (err) {
     console.error('Anthropic API error:', err.message);
     if (!res.headersSent) {
@@ -232,6 +289,23 @@ app.post('/api/send-email', async (req, res) => {
     console.error('Email send error:', err.message);
     res.status(500).json({ error: 'Failed to send email' });
   }
+});
+
+// ── Conversation Memory API ──
+
+app.get('/api/memory/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  const memories = await dbAll(
+    `SELECT * FROM conversation_memory WHERE session_id = ? ORDER BY created_at DESC LIMIT 5`,
+    [sessionId]
+  );
+  res.json(memories.reverse());
+});
+
+app.delete('/api/memory/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  await dbRun(`DELETE FROM conversation_memory WHERE session_id = ?`, [sessionId]);
+  res.json({ cleared: true });
 });
 
 // ── Task API ──

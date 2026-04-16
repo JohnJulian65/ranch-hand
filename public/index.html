@@ -118,6 +118,20 @@
 
     .conv-new:hover { color: #b8943f; }
 
+    .clear-memory-btn {
+      padding: 6px 12px;
+      border: none;
+      background: none;
+      color: #c0392b;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-left: auto;
+      font-family: inherit;
+    }
+    .clear-memory-btn:hover { color: #e74c3c; }
+
     /* Chat */
     #chat {
       flex: 1;
@@ -277,6 +291,7 @@
   <div id="chat-tab" class="tab-content active">
     <div class="conv-bar" id="conv-bar">
       <button class="conv-new" id="conv-new" title="New chat">+</button>
+      <button class="clear-memory-btn" id="clear-memory-btn" title="Clear conversation memory">Clear Memory</button>
     </div>
     <div id="chat"></div>
     <div id="input-bar">
@@ -360,6 +375,13 @@
     let conversations = {};   // { id: { name, messages: [] } }
     let activeConvId = null;
     let sending = false;
+
+    // Persistent session ID for conversation memory
+    let sessionId = localStorage.getItem('rh_session_id');
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      localStorage.setItem('rh_session_id', sessionId);
+    }
 
     const GREETING = "Hey \u2014 I'm Ranch Hand. What do you need?";
 
@@ -504,6 +526,22 @@
 
     convNewBtn.addEventListener('click', () => createConversation());
 
+    document.getElementById('clear-memory-btn').addEventListener('click', async () => {
+      if (!confirm('Clear all conversation memory? Ranch Hand will no longer remember past conversations.')) return;
+      try {
+        await fetch(`/api/memory/${sessionId}`, { method: 'DELETE' });
+        const notice = document.createElement('div');
+        notice.className = 'msg assistant';
+        notice.style.background = '#fff5f5';
+        notice.style.borderLeft = '4px solid #c0392b';
+        notice.innerHTML = '<p><strong>Conversation memory cleared.</strong> Starting fresh.</p>';
+        chatEl.appendChild(notice);
+        chatEl.scrollTop = chatEl.scrollHeight;
+      } catch (err) {
+        console.error('Failed to clear memory:', err);
+      }
+    });
+
     inputEl.addEventListener('input', () => {
       inputEl.style.height = 'auto';
       inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
@@ -565,7 +603,7 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: conv.messages }),
+          body: JSON.stringify({ messages: conv.messages, session_id: sessionId }),
         });
 
         const reader = res.body.getReader();
