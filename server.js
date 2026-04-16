@@ -120,6 +120,22 @@ const MEMBER_EMAILS = {
   'Ryan': 'ryanbraithwaite11@gmail.com',
 };
 
+const ALL_MEMBER_NAMES = Object.keys(MEMBER_EMAILS);
+
+// Normalize an assigned_to input (string, comma-separated string, or array) to a clean array of member names.
+// "All Members" (anywhere in the input) expands to every member.
+function parseAssignees(input) {
+  if (input == null) return [];
+  const raw = Array.isArray(input) ? input : String(input).split(',');
+  const list = raw.map(s => String(s).trim()).filter(Boolean);
+  if (list.some(n => n.toLowerCase() === 'all members')) return ALL_MEMBER_NAMES.slice();
+  return list;
+}
+
+function emailsForAssignees(names) {
+  return names.map(n => MEMBER_EMAILS[n]).filter(Boolean);
+}
+
 const FROM_ADDRESS = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
 // Load all context files as system prompt
@@ -206,13 +222,15 @@ app.post('/api/chat', async (req, res) => {
         const created = [];
         for (const t of taskList) {
           if (!t.title) continue;
-          const assignedEmail = MEMBER_EMAILS[t.assigned_to] || '';
+          const names = parseAssignees(t.assigned_to);
+          const assignedToStr = names.join(', ');
+          const assignedEmailStr = emailsForAssignees(names).join(',');
           await dbRun(
             `INSERT INTO tasks (title, description, assigned_to, assigned_email, due_date, status)
              VALUES (?, ?, ?, ?, ?, 'pending')`,
-            [t.title, t.description || '', t.assigned_to || '', assignedEmail, t.due_date || '']
+            [t.title, t.description || '', assignedToStr, assignedEmailStr, t.due_date || '']
           );
-          created.push({ title: t.title, assigned_to: t.assigned_to, assigned_email: assignedEmail });
+          created.push({ title: t.title, assigned_to: assignedToStr, assigned_email: assignedEmailStr });
         }
         if (created.length > 0) {
           console.log(`[Meeting] Created ${created.length} tasks from transcript`);
@@ -253,20 +271,23 @@ app.post('/api/send-email', async (req, res) => {
     return res.status(400).json({ error: 'assignee and task are required' });
   }
 
-  const email = MEMBER_EMAILS[assignee];
-  if (!email) {
-    return res.json({ sent: false, reason: 'No email on file for ' + assignee });
+  const names = parseAssignees(assignee);
+  const emails = emailsForAssignees(names);
+  if (emails.length === 0) {
+    return res.json({ sent: false, reason: 'No emails on file for: ' + names.join(', ') });
   }
 
   if (!process.env.RESEND_API_KEY) {
     return res.status(500).json({ error: 'RESEND_API_KEY is not configured' });
   }
 
+  const assigneeDisplay = names.join(', ');
+
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const result = await resend.emails.send({
       from: FROM_ADDRESS,
-      to: email,
+      to: emails,
       subject: 'Ranch Hand — New Task Assigned to You',
       html: `
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:500px;margin:0 auto;padding:20px;">
@@ -274,7 +295,7 @@ app.post('/api/send-email', async (req, res) => {
           <p style="color:#888;font-size:14px;margin-top:0;">From Ranch Hand / Capitol Cowboys Operations</p>
           <hr style="border:none;border-top:2px solid #C9A84C;margin:16px 0;">
           <p><strong>Task:</strong> ${task}</p>
-          <p><strong>Assigned To:</strong> ${assignee}</p>
+          <p><strong>Assigned To:</strong> ${assigneeDisplay}</p>
           ${dueDate ? `<p><strong>Due Date:</strong> ${dueDate}</p>` : ''}
           ${assignedBy ? `<p><strong>Assigned By:</strong> ${assignedBy}</p>` : ''}
           <hr style="border:none;border-top:1px solid #eee;margin:16px 0;">
@@ -284,7 +305,7 @@ app.post('/api/send-email', async (req, res) => {
     });
 
     console.log('Resend response:', JSON.stringify(result));
-    res.json({ sent: true, result });
+    res.json({ sent: true, recipients: emails, result });
   } catch (err) {
     console.error('Email send error:', err.message);
     res.status(500).json({ error: 'Failed to send email' });
@@ -322,11 +343,14 @@ app.post('/api/tasks', async (req, res) => {
     return res.status(400).json({ error: 'title is required' });
   }
 
-  const assignedEmail = MEMBER_EMAILS[assigned_to] || '';
+  const names = parseAssignees(assigned_to);
+  const assignedToStr = names.join(', ');
+  const assignedEmailStr = emailsForAssignees(names).join(',');
+
   const result = await dbRun(
     `INSERT INTO tasks (title, description, assigned_to, assigned_email, due_date, status)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [title, description || '', assigned_to || '', assignedEmail, due_date || '', status || 'pending']
+    [title, description || '', assignedToStr, assignedEmailStr, due_date || '', status || 'pending']
   );
 
   const task = await dbGet('SELECT * FROM tasks WHERE id = ?', [Number(result.lastInsertRowid)]);
@@ -342,17 +366,21 @@ app.patch('/api/tasks/:id', async (req, res) => {
     return res.status(404).json({ error: 'Task not found' });
   }
 
-  const assignedEmail = assigned_to !== undefined
-    ? (MEMBER_EMAILS[assigned_to] || '')
-    : existing.assigned_email;
+  let assignedToStr = existing.assigned_to;
+  let assignedEmailStr = existing.assigned_email;
+  if (assigned_to !== undefined) {
+    const names = parseAssignees(assigned_to);
+    assignedToStr = names.join(', ');
+    assignedEmailStr = emailsForAssignees(names).join(',');
+  }
 
   await dbRun(
     `UPDATE tasks SET title = ?, description = ?, assigned_to = ?, assigned_email = ?, due_date = ?, status = ? WHERE id = ?`,
     [
       title !== undefined ? title : existing.title,
       description !== undefined ? description : existing.description,
-      assigned_to !== undefined ? assigned_to : existing.assigned_to,
-      assignedEmail,
+      assignedToStr,
+      assignedEmailStr,
       due_date !== undefined ? due_date : existing.due_date,
       status !== undefined ? status : existing.status,
       Number(id)
@@ -376,7 +404,8 @@ app.delete('/api/tasks/:id', async (req, res) => {
 // ── Automated Task Reminders (daily at 9 AM ET) ──
 
 async function sendReminderEmail(task, type) {
-  if (!task.assigned_email || !process.env.RESEND_API_KEY) return;
+  const emails = (task.assigned_email || '').split(',').map(e => e.trim()).filter(Boolean);
+  if (emails.length === 0 || !process.env.RESEND_API_KEY) return;
 
   const resend = new Resend(process.env.RESEND_API_KEY);
   const isOverdue = type === 'overdue';
@@ -398,7 +427,7 @@ async function sendReminderEmail(task, type) {
   try {
     await resend.emails.send({
       from: FROM_ADDRESS,
-      to: task.assigned_email,
+      to: emails,
       subject,
       html: `
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:500px;margin:0 auto;padding:20px;">
@@ -415,9 +444,9 @@ async function sendReminderEmail(task, type) {
         </div>
       `,
     });
-    console.log(`[Reminder] ${type} email sent to ${task.assigned_email} for: ${task.title}`);
+    console.log(`[Reminder] ${type} email sent to ${emails.join(', ')} for: ${task.title}`);
   } catch (err) {
-    console.error(`[Reminder] Failed to send ${type} email to ${task.assigned_email}:`, err.message);
+    console.error(`[Reminder] Failed to send ${type} email to ${emails.join(', ')}:`, err.message);
   }
 }
 
