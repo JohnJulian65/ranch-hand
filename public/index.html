@@ -4,133 +4,318 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ranch Hand — Capitol Cowboys</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      /* Type: display for signature moments, body for everything else */
+      --font-display: "Libre Caslon Display", "Iowan Old Style", Georgia, Cambria, serif;
+      --font-body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", monospace;
+
+      /* 5-step type scale (1.143–1.333 ratio) */
+      --fs-xs: 0.75rem;     /* 12px — badges, micro labels */
+      --fs-sm: 0.875rem;    /* 14px — meta, buttons, tabs */
+      --fs-base: 1rem;      /* 16px — body */
+      --fs-md: 1.125rem;    /* 18px — emphasis */
+      --fs-lg: 1.5rem;      /* 24px — app header */
+
+      /* Weights */
+      --fw-regular: 400;
+      --fw-medium: 500;
+      --fw-semibold: 600;
+      --fw-bold: 700;
+
+      /* Color — OKLCH, neutrals tinted toward saddle-gold hue (75°) */
+      /* Light surfaces */
+      --c-surface:      oklch(0.99 0.005 75);   /* primary bg (was #fff) */
+      --c-surface-2:    oklch(0.97 0.008 75);   /* raised / recessed (was #f5f5f5, #f1f1f1) */
+      --c-surface-3:    oklch(0.955 0.01 75);   /* form inset (was #f9f9f9) */
+      --c-line:         oklch(0.92 0.006 75);   /* default border (was #e5e5e5, #eee) */
+      --c-line-strong:  oklch(0.86 0.008 75);   /* input border (was #ddd) */
+
+      /* Ink (text on light) */
+      --c-ink:          oklch(0.22 0.008 75);   /* primary body (was #1a1a1a, #2C2C2C text) */
+      --c-ink-2:        oklch(0.42 0.008 75);   /* secondary (was #555, #666) */
+      --c-ink-3:        oklch(0.50 0.008 75);   /* tertiary / meta (was #777, #888) */
+      --c-ink-4:        oklch(0.72 0.008 75);   /* subtle (was #999, #ccc) */
+
+      /* Dark surface (header, tabs, mic) — warm charcoal */
+      --c-dark:         oklch(0.25 0.008 75);   /* was #2C2C2C */
+      --c-dark-2:       oklch(0.32 0.008 75);   /* hover (was #3a3a3a, #444) */
+      --c-on-dark:      oklch(0.98 0.005 75);   /* primary text on dark (was #fff, #f1f1f1) */
+      --c-on-dark-2:    oklch(0.70 0.006 75);   /* secondary (was #aaa, #999) */
+
+      /* Brand — saddle gold */
+      --c-gold:         oklch(0.76 0.11 75);    /* primary (was #C9A84C) */
+      --c-gold-hover:   oklch(0.70 0.11 70);    /* hover (was #b8943f) */
+      --c-gold-deep:    oklch(0.58 0.10 65);    /* darker (was #8a6a29) */
+      --c-gold-light:   oklch(0.86 0.11 80);    /* focus ring on dark */
+
+      /* Semantic — grounded in earth/western palette, not Bootstrap */
+      --c-danger:       oklch(0.55 0.17 25);    /* barn red (was #c0392b) */
+      --c-danger-bg:    oklch(0.96 0.03 25);    /* (was #fff5f5, #fff0f0) */
+      --c-danger-text:  oklch(0.40 0.14 25);    /* text on light bg (was #9a2b2b) */
+      --c-danger-edge:  oklch(0.88 0.05 25);    /* (was #f0d6d6) */
+
+      --c-success:      oklch(0.58 0.10 155);   /* pasture green */
+      --c-success-bg:   oklch(0.94 0.04 155);   /* (was #d4edda, #e8f5e9) */
+      --c-success-text: oklch(0.38 0.09 155);   /* (was #155724, #2d6f3f) */
+
+      --c-info:         oklch(0.55 0.12 240);   /* denim blue */
+      --c-info-bg:      oklch(0.94 0.03 240);   /* (was #d1ecf1) */
+      --c-info-text:    oklch(0.38 0.10 240);   /* (was #0c5460) */
+
+      --c-pending-bg:   oklch(0.95 0.05 85);    /* parchment (was #fef3cd) */
+      --c-pending-text: oklch(0.40 0.09 70);    /* brass (was #856404) */
+
+      /* Focus — overridable per surface.
+         Default uses gold-deep so the ring passes 3:1 against light surfaces;
+         dark surfaces override to gold-light below. */
+      --c-focus: var(--c-gold-deep);
+
+      /* Motion */
+      --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+      --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+      --dur-fast:   140ms;
+      --dur-base:   220ms;
+      --dur-slow:   420ms;
+    }
+
+    /* Dark surfaces want a brighter gold ring for visibility */
+    header,
+    .tab-nav,
+    .cal-header button,
+    #mic-btn,
+    .retry-btn {
+      --c-focus: var(--c-gold-light);
+    }
+
+    /* Press feedback on primary buttons — subtle compression, exponential ease */
+    #send, .add-task-btn, .btn-save, .btn-cancel,
+    .cal-header button, .retry-btn, .conv-new {
+      transition:
+        background var(--dur-fast) var(--ease-out-quart),
+        color var(--dur-fast) var(--ease-out-quart),
+        transform var(--dur-fast) var(--ease-out-quart);
+    }
+    #send:active:not(:disabled),
+    .add-task-btn:active,
+    .btn-save:active:not(:disabled),
+    .btn-cancel:active,
+    .cal-header button:active,
+    .retry-btn:active,
+    .conv-new:active {
+      transform: scale(0.97);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: var(--font-body);
+      font-size: var(--fs-base);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       height: 100dvh;
       display: flex;
       flex-direction: column;
-      background: #fff;
-      color: #1a1a1a;
+      background: var(--c-surface);
+      color: var(--c-ink);
+    }
+
+    /* Visually hidden for accessibility */
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Global focus indicator — gold ring works on light and dark surfaces */
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 2px solid var(--c-focus);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
     }
 
     header {
-      background: #2C2C2C;
-      color: #fff;
+      background: var(--c-dark);
+      color: var(--c-on-dark);
       padding: 14px 20px;
       flex-shrink: 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      animation: rise var(--dur-slow) var(--ease-out-expo) both;
     }
 
-    header h1 { font-size: 1.25rem; font-weight: 700; color: #C9A84C; line-height: 1.2; }
-    header p { font-size: 0.8rem; color: #aaa; margin-top: 2px; }
+    header h1 {
+      font-family: var(--font-display);
+      font-size: var(--fs-lg);
+      font-weight: 400;
+      color: var(--c-gold);
+      line-height: 1;
+      letter-spacing: 0.005em;
+    }
+    header p {
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-medium);
+      color: var(--c-on-dark-2);
+      margin-top: 4px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
 
     /* Main Tab Nav */
     .tab-nav {
       display: flex;
       flex-shrink: 0;
-      background: #2C2C2C;
-      border-bottom: 2px solid #C9A84C;
+      background: var(--c-dark);
+      border-bottom: 2px solid var(--c-gold);
+      animation: rise var(--dur-slow) var(--ease-out-expo) 60ms both;
+    }
+    main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      animation: rise var(--dur-slow) var(--ease-out-expo) 140ms both;
     }
 
     .tab-nav button {
       flex: 1;
-      padding: 10px 0;
+      padding: 12px 0;
       border: none;
-      background: #2C2C2C;
-      color: #999;
-      font-size: 0.9rem;
-      font-weight: 600;
+      background: var(--c-dark);
+      color: var(--c-on-dark-2);
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
       cursor: pointer;
       font-family: inherit;
       transition: color 0.2s, background 0.2s;
     }
 
-    .tab-nav button.active { color: #C9A84C; background: #3a3a3a; }
-    .tab-nav button:not(.active):hover { color: #ccc; }
+    .tab-nav button.active { color: var(--c-gold); background: var(--c-dark-2); }
+    .tab-nav button:not(.active):hover { color: var(--c-on-dark); }
 
     .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
-    .tab-content.active { display: flex; }
+    .tab-content.active {
+      display: flex;
+      animation: rise var(--dur-base) var(--ease-out-quart);
+    }
 
     /* Chat Conversation Tabs */
     .conv-bar {
       display: flex;
       align-items: center;
-      background: #f5f5f5;
-      border-bottom: 1px solid #e5e5e5;
+      background: var(--c-surface-2);
+      border-bottom: 1px solid var(--c-line);
       flex-shrink: 0;
       overflow-x: auto;
       scrollbar-width: thin;
     }
 
-    .conv-bar::-webkit-scrollbar { height: 3px; }
-    .conv-bar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    .conv-bar::-webkit-scrollbar { height: 4px; }
+    .conv-bar::-webkit-scrollbar-thumb { background: var(--c-ink-3); border-radius: 3px; }
+    .conv-bar { scrollbar-color: var(--c-ink-3) var(--c-surface-2); }
 
     .conv-tab {
       display: flex;
       align-items: center;
       gap: 4px;
       padding: 7px 10px;
+      max-width: 200px;
       border: none;
       background: none;
-      color: #777;
-      font-size: 0.78rem;
+      color: var(--c-ink-2);
+      font-size: var(--fs-xs);
       font-family: inherit;
       cursor: pointer;
       white-space: nowrap;
       border-bottom: 2px solid transparent;
       flex-shrink: 0;
+      transition:
+        color var(--dur-fast) var(--ease-out-quart),
+        background var(--dur-fast) var(--ease-out-quart),
+        border-bottom-color var(--dur-fast) var(--ease-out-quart);
+    }
+
+    .conv-tab > span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
     }
 
     .conv-tab.active {
-      color: #2C2C2C;
-      font-weight: 600;
-      border-bottom-color: #C9A84C;
-      background: #fff;
+      color: var(--c-ink);
+      font-weight: var(--fw-semibold);
+      border-bottom-color: var(--c-gold);
+      background: var(--c-surface);
     }
 
-    .conv-tab:not(.active):hover { color: #333; background: #eee; }
+    .conv-tab:not(.active):hover { color: var(--c-ink); background: var(--c-surface-3); }
 
-    .conv-tab .close-conv {
-      font-size: 0.7rem;
-      color: #aaa;
+    .conv-new {
+      padding: 10px 14px;
+      border: none;
+      background: none;
+      color: var(--c-ink);
+      font-size: var(--fs-md);
+      font-weight: var(--fw-bold);
       cursor: pointer;
-      padding: 0 2px;
+      flex-shrink: 0;
+      min-width: 44px;
+      min-height: 44px;
       line-height: 1;
     }
 
-    .conv-tab .close-conv:hover { color: #c0392b; }
+    .conv-new:hover { color: var(--c-gold-deep); }
 
-    .conv-new {
-      padding: 6px 12px;
-      border: none;
+    .conv-tab .close-conv {
       background: none;
-      color: #C9A84C;
-      font-size: 1rem;
-      font-weight: 700;
+      border: none;
+      color: var(--c-ink-3);
       cursor: pointer;
-      flex-shrink: 0;
+      padding: 6px;
+      line-height: 1;
+      font-size: var(--fs-sm);
+      border-radius: 4px;
+      font-family: inherit;
     }
-
-    .conv-new:hover { color: #b8943f; }
+    .conv-tab .close-conv:hover { color: var(--c-danger); background: rgba(0,0,0,0.05); }
 
     .clear-memory-btn {
       padding: 6px 12px;
       border: none;
       background: none;
-      color: #c0392b;
-      font-size: 0.75rem;
-      font-weight: 600;
+      color: var(--c-danger);
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.03em;
       cursor: pointer;
       flex-shrink: 0;
       margin-left: auto;
       font-family: inherit;
     }
-    .clear-memory-btn:hover { color: #e74c3c; }
+    .clear-memory-btn:hover { color: var(--c-danger-text); }
 
     /* Chat */
     #chat {
@@ -143,29 +328,36 @@
     }
 
     .msg {
-      max-width: 85%;
+      max-width: min(85%, 65ch);
       padding: 10px 14px;
       border-radius: 16px;
-      font-size: 0.95rem;
-      line-height: 1.5;
+      font-size: var(--fs-base);
+      line-height: 1.55;
       word-wrap: break-word;
     }
+    .msg--enter { animation: rise var(--dur-base) var(--ease-out-quart); }
+    .system-notice { animation: rise var(--dur-base) var(--ease-out-quart); }
+    .typing { animation: fade-in var(--dur-fast) var(--ease-out-quart); }
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
 
-    .msg.assistant { align-self: flex-start; background: #f1f1f1; border-bottom-left-radius: 4px; }
-    .msg.user { align-self: flex-end; background: #C9A84C; color: #fff; border-bottom-right-radius: 4px; }
+    .msg.assistant { align-self: flex-start; background: var(--c-surface-2); border-bottom-left-radius: 4px; }
+    .msg.user { align-self: flex-end; background: var(--c-gold); color: var(--c-ink); border-bottom-right-radius: 4px; }
     .msg p { margin-bottom: 8px; }
     .msg p:last-child { margin-bottom: 0; }
-    .msg strong { font-weight: 600; }
+    .msg strong { font-weight: var(--fw-semibold); }
     .msg ul, .msg ol { margin: 4px 0 8px 20px; }
     .msg li { margin-bottom: 2px; }
-    .msg code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
-    .msg pre { background: #2C2C2C; color: #f1f1f1; padding: 10px 12px; border-radius: 8px; overflow-x: auto; margin: 6px 0; font-size: 0.85em; }
-    .msg pre code { background: none; padding: 0; color: inherit; }
+    .msg code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; font-family: var(--font-mono); }
+    .msg pre { background: var(--c-dark); color: var(--c-on-dark); padding: 10px 12px; border-radius: 8px; overflow-x: auto; margin: 6px 0; font-size: 0.85em; font-family: var(--font-mono); }
+    .msg pre code { background: none; padding: 0; color: inherit; font-family: inherit; }
 
     .typing {
       align-self: flex-start;
       padding: 10px 18px;
-      background: #f1f1f1;
+      background: var(--c-surface-2);
       border-radius: 16px;
       border-bottom-left-radius: 4px;
       display: flex;
@@ -173,13 +365,51 @@
       align-items: center;
     }
 
-    .typing span { width: 7px; height: 7px; background: #999; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
-    .typing span:nth-child(2) { animation-delay: 0.2s; }
-    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    .typing span {
+      width: 7px; height: 7px;
+      background: var(--c-ink-3); border-radius: 50%;
+      animation: typing-dot 1.25s var(--ease-out-quart) infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.15s; }
+    .typing span:nth-child(3) { animation-delay: 0.3s; }
 
-    @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-      40% { transform: scale(1); opacity: 1; }
+    .retry-btn {
+      margin-top: 8px;
+      background: var(--c-dark); color: var(--c-on-dark); border: none; border-radius: 8px;
+      padding: 7px 14px; font-size: var(--fs-sm); font-weight: var(--fw-semibold);
+      letter-spacing: 0.04em;
+      cursor: pointer; font-family: inherit;
+    }
+    .retry-btn:hover { background: var(--c-dark-2); }
+
+    .system-notice {
+      align-self: center;
+      max-width: 85%;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-medium);
+      letter-spacing: 0.02em;
+      color: var(--c-ink-2);
+      background: var(--c-surface-2);
+      text-align: center;
+    }
+    .system-notice.success { color: var(--c-success-text); background: var(--c-success-bg); }
+    .system-notice.warning { color: var(--c-danger-text); background: var(--c-danger-bg); }
+
+    @keyframes typing-dot {
+      0%, 70%, 100% { transform: scale(0.55); opacity: 0.35; }
+      35%           { transform: scale(1);    opacity: 1;    }
+    }
+
+    /* Shared entrance curves — used by messages, reveals, tab switches */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes settle {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: none; }
     }
 
     #input-bar {
@@ -187,91 +417,251 @@
       display: flex;
       gap: 8px;
       padding: 12px 16px;
-      border-top: 1px solid #e5e5e5;
-      background: #fff;
+      border-top: 1px solid var(--c-line);
+      background: var(--c-surface);
     }
 
     #input-bar textarea {
-      flex: 1; resize: none; border: 1px solid #ddd; border-radius: 12px;
-      padding: 10px 14px; font-size: 0.95rem; font-family: inherit;
+      flex: 1; resize: none; border: 1px solid var(--c-line-strong); border-radius: 12px;
+      padding: 10px 14px; font-size: var(--fs-base); font-family: inherit;
       line-height: 1.4; max-height: 120px; outline: none;
+      background: var(--c-surface); color: var(--c-ink);
+      transition: border-color var(--dur-fast) var(--ease-out-quart);
     }
-    #input-bar textarea:focus { border-color: #C9A84C; }
+    #input-bar textarea:focus { border-color: var(--c-gold); }
 
     #input-bar button {
-      background: #C9A84C; color: #fff; border: none; border-radius: 12px;
-      padding: 0 18px; font-size: 0.95rem; font-weight: 600; cursor: pointer; flex-shrink: 0;
+      background: var(--c-gold); color: var(--c-ink); border: none; border-radius: 12px;
+      padding: 0 18px; font-size: var(--fs-sm); font-weight: var(--fw-semibold);
+      letter-spacing: 0.04em;
+      cursor: pointer; flex-shrink: 0;
+      font-family: inherit;
     }
     #input-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
-    #input-bar button:hover:not(:disabled) { background: #b8943f; }
+    #input-bar button:hover:not(:disabled) { background: var(--c-gold-hover); }
 
     #mic-btn {
-      background: #2C2C2C; color: #fff; border: none; border-radius: 12px;
-      padding: 0 14px; font-size: 1.1rem; cursor: pointer; flex-shrink: 0;
+      background: var(--c-dark); color: var(--c-on-dark); border: none; border-radius: 12px;
+      padding: 0 14px; font-size: var(--fs-md); cursor: pointer; flex-shrink: 0;
       display: none; line-height: 1;
     }
-    #mic-btn.active { background: #c0392b; animation: pulse 1.5s infinite; }
-    #mic-btn:hover:not(.active) { background: #444; }
+    #mic-btn.active { background: var(--c-danger); animation: pulse 1.5s infinite; }
+    #mic-btn:hover:not(.active) { background: var(--c-dark-2); }
 
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
     /* Tasks View */
     #tasks-view { flex: 1; overflow-y: auto; padding: 16px; }
     .summary-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-    .summary-item { background: #f5f5f5; padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; }
-    .summary-item.overdue { color: #c0392b; }
+    .summary-item {
+      background: var(--c-surface-2); padding: 8px 14px; border-radius: 10px;
+      font-size: var(--fs-sm); font-weight: var(--fw-semibold);
+      font-variant-numeric: tabular-nums;
+    }
+    .summary-item.overdue { color: var(--c-danger); }
 
-    .add-task-btn { background: #C9A84C; color: #fff; border: none; border-radius: 10px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-bottom: 16px; font-family: inherit; }
-    .add-task-btn:hover { background: #b8943f; }
+    .add-task-btn {
+      background: var(--c-gold); color: var(--c-ink); border: none; border-radius: 10px;
+      padding: 10px 20px; font-size: var(--fs-sm); font-weight: var(--fw-semibold);
+      letter-spacing: 0.04em;
+      cursor: pointer; margin-bottom: 16px; font-family: inherit;
+    }
+    .add-task-btn:hover { background: var(--c-gold-hover); }
 
-    .task-form { display: none; background: #f9f9f9; border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    .task-form.open { display: block; }
-    .task-form label { display: block; font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; margin-top: 10px; }
+    .task-form {
+      display: none; background: var(--c-surface-3);
+      border: 1px solid var(--c-line); border-radius: 12px;
+      padding: 16px; margin-bottom: 16px;
+    }
+    .task-form.open {
+      display: block;
+      animation: settle var(--dur-base) var(--ease-out-quart);
+    }
+    .task-form label {
+      display: block;
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--c-ink-2);
+      margin-bottom: 6px; margin-top: 12px;
+    }
     .task-form label:first-child { margin-top: 0; }
-    .task-form input, .task-form select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; font-family: inherit; outline: none; }
-    .task-form input:focus, .task-form select:focus { border-color: #C9A84C; }
-    .task-form-actions { display: flex; gap: 8px; margin-top: 14px; }
-    .task-form-actions button { padding: 8px 18px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .btn-save { background: #C9A84C; color: #fff; } .btn-save:hover { background: #b8943f; }
-    .btn-cancel { background: #e5e5e5; color: #333; } .btn-cancel:hover { background: #ddd; }
+    .task-form input, .task-form select {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--c-line-strong); border-radius: 8px;
+      font-size: var(--fs-base); font-family: inherit; outline: none;
+      background: var(--c-surface); color: var(--c-ink);
+      transition: border-color var(--dur-fast) var(--ease-out-quart);
+    }
+    .task-form input:focus, .task-form select:focus { border-color: var(--c-gold); }
+    .task-form-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .task-form-actions button {
+      padding: 9px 18px; border: none; border-radius: 8px;
+      font-size: var(--fs-sm); font-weight: var(--fw-semibold);
+      letter-spacing: 0.04em;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-save { background: var(--c-gold); color: var(--c-ink); } .btn-save:hover { background: var(--c-gold-hover); }
+    .btn-cancel { background: var(--c-line); color: var(--c-ink); } .btn-cancel:hover { background: var(--c-line-strong); }
 
     .task-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-    .task-card { background: #fff; border: 1px solid #e5e5e5; border-left: 4px solid #C9A84C; border-radius: 10px; padding: 12px 14px; position: relative; }
-    .task-card.status-in-progress { border-left-color: #3498db; }
-    .task-card.status-done { border-left-color: #27ae60; }
-    .task-card.overdue { background: #fff5f5; }
+    .tasks-empty {
+      color: var(--c-ink-3);
+      font-size: var(--fs-sm);
+      font-style: italic;
+      padding: 24px 4px;
+    }
+    .task-card {
+      background: var(--c-surface); border: 1px solid var(--c-line);
+      border-radius: 10px; padding: 14px; position: relative;
+      transition:
+        transform var(--dur-fast) var(--ease-out-quart),
+        border-color var(--dur-fast) var(--ease-out-quart),
+        box-shadow var(--dur-fast) var(--ease-out-quart);
+    }
+    .task-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--c-line-strong);
+      box-shadow: 0 2px 10px oklch(0.22 0.008 75 / 0.06);
+    }
+    .task-card.overdue { background: var(--c-danger-bg); border-color: var(--c-danger-edge); }
+    .task-card.overdue:hover { border-color: oklch(0.75 0.1 25); }
     .task-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .task-title { font-weight: 600; font-size: 0.95rem; flex: 1; }
-    .task-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .task-card-actions button { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 2px 4px; opacity: 0.5; }
-    .task-card-actions button:hover { opacity: 1; }
-    .task-meta { display: flex; gap: 12px; margin-top: 6px; font-size: 0.8rem; color: #777; flex-wrap: wrap; align-items: center; }
-    .overdue-badge { background: #c0392b; color: #fff; font-size: 0.7rem; padding: 1px 7px; border-radius: 6px; font-weight: 600; }
-    .status-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
-    .status-badge.pending { background: #fef3cd; color: #856404; }
-    .status-badge.in-progress { background: #d1ecf1; color: #0c5460; }
-    .status-badge.done { background: #d4edda; color: #155724; }
+    .task-title {
+      font-weight: var(--fw-semibold);
+      font-size: var(--fs-base);
+      line-height: 1.35;
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    .task-card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .task-card-actions button {
+      background: none; border: none; cursor: pointer;
+      font-size: var(--fs-sm); opacity: 0.55; color: var(--c-ink);
+      min-width: 32px; min-height: 32px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px; font-family: inherit;
+    }
+    .task-card-actions button:hover { opacity: 1; background: rgba(0,0,0,0.05); }
+    .task-meta {
+      display: flex; gap: 12px; margin-top: 8px;
+      font-size: var(--fs-xs); color: var(--c-ink-2); flex-wrap: wrap; align-items: center;
+      font-variant-numeric: tabular-nums;
+    }
+    .overdue-badge {
+      background: var(--c-danger-text); color: var(--c-on-dark);
+      font-size: var(--fs-xs); padding: 2px 8px; border-radius: 6px;
+      font-weight: var(--fw-bold); letter-spacing: 0.08em;
+    }
+    .status-badge {
+      font-size: var(--fs-xs); padding: 3px 9px; border-radius: 6px;
+      font-weight: var(--fw-semibold); letter-spacing: 0.03em;
+    }
+    .status-badge.pending { background: var(--c-pending-bg); color: var(--c-pending-text); }
+    .status-badge.in-progress { background: var(--c-info-bg); color: var(--c-info-text); }
+    .status-badge.done { background: var(--c-success-bg); color: var(--c-success-text); }
 
     /* Calendar */
     .calendar-section { margin-top: 8px; }
-    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .cal-header h3 { font-size: 1rem; font-weight: 600; }
-    .cal-header button { background: #2C2C2C; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
-    .cal-header button:hover { background: #444; }
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .cal-header h3 {
+      font-family: var(--font-display);
+      font-size: var(--fs-md);
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+    .cal-header button {
+      background: var(--c-dark); color: var(--c-on-dark); border: none; border-radius: 8px;
+      padding: 6px 12px; cursor: pointer; font-family: inherit;
+      font-size: var(--fs-sm); font-weight: var(--fw-medium);
+    }
+    .cal-header button:hover { background: var(--c-dark-2); }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-    .cal-day-label { text-align: center; font-size: 0.7rem; font-weight: 600; color: #999; padding: 4px 0; }
-    .cal-day { text-align: center; padding: 8px 2px 6px; font-size: 0.85rem; border-radius: 8px; cursor: pointer; min-height: 40px; position: relative; }
-    .cal-day:hover { background: #f5f5f5; }
-    .cal-day.today { font-weight: 700; color: #C9A84C; }
+    .cal-day-label {
+      text-align: center;
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-ink-3);
+      padding: 6px 0;
+    }
+    .cal-day {
+      text-align: center; padding: 10px 2px 8px;
+      font-size: var(--fs-sm);
+      font-variant-numeric: tabular-nums;
+      border-radius: 8px; cursor: pointer; min-height: 44px; position: relative;
+      background: none; border: none; font-family: inherit; color: inherit; width: 100%;
+    }
+    .cal-day:hover { background: var(--c-surface-2); }
+    .cal-day.today {
+      font-weight: var(--fw-bold);
+      color: var(--c-ink);
+      background: oklch(0.93 0.06 75);
+    }
+    .cal-day.today:hover { background: oklch(0.9 0.08 75); }
     .cal-day.empty { cursor: default; } .cal-day.empty:hover { background: none; }
-    .cal-dot { width: 5px; height: 5px; background: #C9A84C; border-radius: 50%; margin: 2px auto 0; }
-    .cal-day.has-overdue .cal-dot { background: #c0392b; }
-    .cal-popup { display: none; background: #f9f9f9; border: 1px solid #e5e5e5; border-radius: 10px; padding: 12px; margin-top: 8px; margin-bottom: 8px; }
-    .cal-popup.open { display: block; }
-    .cal-popup h4 { font-size: 0.85rem; margin-bottom: 6px; color: #666; }
-    .cal-popup ul { list-style: none; font-size: 0.85rem; }
-    .cal-popup li { padding: 4px 0; border-bottom: 1px solid #eee; }
+    .cal-dot { width: 5px; height: 5px; background: var(--c-gold); border-radius: 50%; margin: 2px auto 0; }
+    .cal-day.has-overdue .cal-dot { background: var(--c-danger); }
+    .cal-popup { display: none; background: var(--c-surface-3); border: 1px solid var(--c-line); border-radius: 10px; padding: 14px; margin-top: 8px; margin-bottom: 8px; }
+    .cal-popup.open {
+      display: block;
+      animation: settle var(--dur-base) var(--ease-out-quart);
+    }
+    .cal-popup h4 {
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--c-ink-2);
+      margin-bottom: 8px;
+    }
+    .cal-popup ul { list-style: none; font-size: var(--fs-sm); }
+    .cal-popup li { padding: 6px 0; border-bottom: 1px solid var(--c-line); }
     .cal-popup li:last-child { border-bottom: none; }
+
+    /* ── Responsive adaptation ──
+       Mobile-first baseline above. On wider viewports, the app
+       sits as a centered frame rather than stretching edge-to-edge. */
+    @media (min-width: 720px) {
+      /* Backdrop color for the app column to float on */
+      html { background: var(--c-surface-2); }
+      body {
+        max-width: 920px;
+        margin-inline: auto;
+        border-inline: 1px solid var(--c-line);
+      }
+      /* More generous internal padding when we have the room */
+      #chat { padding: 20px 24px; }
+      #tasks-view { padding: 24px; }
+      #input-bar { padding: 14px 24px; }
+      header { padding: 18px 24px; }
+      .conv-bar { padding-inline: 12px; }
+    }
+
+    @media (min-width: 1024px) {
+      body { max-width: 960px; }
+      /* Two-column task summary + wider form feel appropriate here */
+      .summary-bar { gap: 16px; }
+      #tasks-view { padding: 28px 32px; }
+      #chat { padding: 24px 32px; }
+      #input-bar { padding: 16px 32px; }
+      header { padding: 20px 32px; }
+      .task-cards { gap: 12px; }
+      /* On the widest viewports, let calendar breathe below the list */
+      .calendar-section { margin-top: 24px; }
+    }
+
+    /* Landscape phones & narrow tablets: fewer rows of chrome stealing
+       vertical space. Trim header/tab padding when the viewport is short. */
+    @media (max-height: 600px) {
+      header { padding: 10px 16px; }
+      header h1 { font-size: 1.25rem; }
+      header p { display: none; }
+      .tab-nav button { padding: 9px 0; }
+    }
   </style>
 </head>
 <body>
@@ -282,86 +672,113 @@
     </div>
   </header>
 
-  <div class="tab-nav">
-    <button class="active" data-tab="chat-tab">Chat</button>
-    <button data-tab="tasks-tab">Tasks</button>
-  </div>
+  <nav class="tab-nav" role="tablist" aria-label="Sections">
+    <button class="active" role="tab" id="chat-tab-btn" aria-selected="true" aria-controls="chat-tab" tabindex="0" data-tab="chat-tab">Chat</button>
+    <button role="tab" id="tasks-tab-btn" aria-selected="false" aria-controls="tasks-tab" tabindex="-1" data-tab="tasks-tab">Tasks</button>
+  </nav>
 
-  <!-- Chat Tab -->
-  <div id="chat-tab" class="tab-content active">
-    <div class="conv-bar" id="conv-bar">
-      <button class="conv-new" id="conv-new" title="New chat">+</button>
-      <button class="clear-memory-btn" id="clear-memory-btn" title="Clear conversation memory">Clear Memory</button>
-    </div>
-    <div id="chat"></div>
-    <div id="input-bar">
-      <textarea id="input" rows="1" placeholder="Type a message..." autocomplete="off"></textarea>
-      <button id="mic-btn" aria-label="Voice input">&#x1F3A4;</button>
-      <button id="send">Send</button>
-    </div>
-  </div>
+  <main>
+    <!-- Chat Tab -->
+    <section id="chat-tab" class="tab-content active" role="tabpanel" aria-labelledby="chat-tab-btn" tabindex="0">
+      <h2 class="sr-only">Chat</h2>
+      <div class="conv-bar" id="conv-bar" role="toolbar" aria-label="Conversations">
+        <button class="conv-new" id="conv-new" aria-label="New conversation" title="New conversation">+</button>
+        <button class="clear-memory-btn" id="clear-memory-btn" aria-label="Clear conversation memory" title="Clear conversation memory">Clear Memory</button>
+      </div>
+      <div id="chat" aria-live="polite" aria-atomic="false" aria-relevant="additions" aria-label="Conversation"></div>
+      <div id="input-bar">
+        <label for="input" class="sr-only">Message</label>
+        <textarea id="input" rows="1" placeholder="Type a message..." autocomplete="off" aria-label="Message"></textarea>
+        <button id="mic-btn" type="button" aria-label="Start voice input" aria-pressed="false">&#x1F3A4;</button>
+        <button id="send" type="button">Send</button>
+      </div>
+    </section>
 
-  <!-- Tasks Tab -->
-  <div id="tasks-tab" class="tab-content">
-    <div id="tasks-view">
-      <div class="summary-bar" id="summary-bar"></div>
-      <button class="add-task-btn" id="add-task-btn">+ Add Task</button>
-      <div class="task-form" id="task-form">
-        <label>Task</label>
-        <input type="text" id="tf-title" placeholder="What needs to be done?">
-        <label>Assign To</label>
-        <select id="tf-assignee">
-<option value="">Select member</option>
-          <option>Grant</option>
-          <option>Patrick</option>
-          <option>Aaron</option>
-          <option>Cesar</option>
-          <option>Jon Michael</option>
-          <option>Tristan</option>
-          <option>Nico</option>
-          <option>Ryan</option>
-          <option>Julian</option>
-        </select>
-        <label>Due Date</label>
-        <input type="date" id="tf-due">
-        <label>Status</label>
-        <select id="tf-status">
-          <option value="Pending">Pending</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Done">Done</option>
-        </select>
-        <input type="hidden" id="tf-edit-id" value="">
-        <div class="task-form-actions">
-          <button class="btn-save" id="tf-save">Save</button>
-          <button class="btn-cancel" id="tf-cancel">Cancel</button>
-        </div>
+    <!-- Tasks Tab -->
+    <section id="tasks-tab" class="tab-content" role="tabpanel" aria-labelledby="tasks-tab-btn" tabindex="0" hidden>
+      <h2 class="sr-only">Tasks</h2>
+      <div id="tasks-view">
+        <div class="summary-bar" id="summary-bar" aria-label="Task summary"></div>
+        <button class="add-task-btn" id="add-task-btn" type="button">+ Add Task</button>
+        <form class="task-form" id="task-form" aria-label="Task editor">
+          <label for="tf-title">Task</label>
+          <input type="text" id="tf-title" placeholder="What needs to be done?" maxlength="200" required>
+          <label for="tf-assignee">Assign To</label>
+          <select id="tf-assignee">
+            <option value="">Select member</option>
+            <option>Grant</option>
+            <option>Patrick</option>
+            <option>Aaron</option>
+            <option>Cesar</option>
+            <option>Jon Michael</option>
+            <option>Tristan</option>
+            <option>Nico</option>
+            <option>Ryan</option>
+            <option>Julian</option>
+          </select>
+          <label for="tf-due">Due Date</label>
+          <input type="date" id="tf-due">
+          <label for="tf-status">Status</label>
+          <select id="tf-status">
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select>
+          <input type="hidden" id="tf-edit-id" value="">
+          <div class="task-form-actions">
+            <button class="btn-save" id="tf-save" type="submit">Save</button>
+            <button class="btn-cancel" id="tf-cancel" type="button">Cancel</button>
+          </div>
+        </form>
+        <div class="task-cards" id="task-cards" aria-label="Tasks"></div>
+        <section class="calendar-section" aria-label="Task calendar">
+          <div class="cal-header">
+            <button id="cal-prev" type="button" aria-label="Previous month">&larr;</button>
+            <h3 id="cal-title" aria-live="polite"></h3>
+            <button id="cal-next" type="button" aria-label="Next month">&rarr;</button>
+          </div>
+          <div class="cal-grid" id="cal-grid" role="grid"></div>
+          <div class="cal-popup" id="cal-popup" role="region" aria-live="polite">
+            <h4 id="cal-popup-title"></h4>
+            <ul id="cal-popup-list"></ul>
+          </div>
+        </section>
       </div>
-      <div class="task-cards" id="task-cards"></div>
-      <div class="calendar-section">
-        <div class="cal-header">
-          <button id="cal-prev">&larr;</button>
-          <h3 id="cal-title"></h3>
-          <button id="cal-next">&rarr;</button>
-        </div>
-        <div class="cal-grid" id="cal-grid"></div>
-        <div class="cal-popup" id="cal-popup">
-          <h4 id="cal-popup-title"></h4>
-          <ul id="cal-popup-list"></ul>
-        </div>
-      </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <script>
-    // ── Tab Navigation ──
-    const tabBtns = document.querySelectorAll('.tab-nav button');
+    // ── Tab Navigation (ARIA tablist pattern) ──
+    const tabBtns = Array.from(document.querySelectorAll('.tab-nav [role="tab"]'));
     const tabContents = document.querySelectorAll('.tab-content');
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
+
+    function activateTab(btn, { focus = false } = {}) {
+      tabBtns.forEach(b => {
+        const isActive = b === btn;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        b.setAttribute('tabindex', isActive ? '0' : '-1');
+      });
+      tabContents.forEach(t => {
+        const isActive = t.id === btn.dataset.tab;
+        t.classList.toggle('active', isActive);
+        if (isActive) t.removeAttribute('hidden');
+        else t.setAttribute('hidden', '');
+      });
+      if (focus) btn.focus();
+    }
+
+    tabBtns.forEach((btn, i) => {
+      btn.addEventListener('click', () => activateTab(btn));
+      btn.addEventListener('keydown', (e) => {
+        let target;
+        if (e.key === 'ArrowRight') target = tabBtns[(i + 1) % tabBtns.length];
+        else if (e.key === 'ArrowLeft') target = tabBtns[(i - 1 + tabBtns.length) % tabBtns.length];
+        else if (e.key === 'Home') target = tabBtns[0];
+        else if (e.key === 'End') target = tabBtns[tabBtns.length - 1];
+        else return;
+        e.preventDefault();
+        activateTab(target, { focus: true });
       });
     });
 
@@ -433,7 +850,8 @@
       activeConvId = id;
       saveConversations();
       renderConvTabs();
-      renderChat();
+      chatEl.innerHTML = '';
+      appendMessage('assistant', GREETING);
       return id;
     }
 
@@ -468,15 +886,19 @@
       ids.forEach(id => {
         const conv = conversations[id];
         const tab = document.createElement('button');
+        tab.type = 'button';
         tab.className = 'conv-tab' + (id === activeConvId ? ' active' : '');
+        if (id === activeConvId) tab.setAttribute('aria-current', 'true');
         const nameSpan = document.createElement('span');
-        nameSpan.textContent = conv.name.length > 20 ? conv.name.slice(0, 20) + '...' : conv.name;
+        nameSpan.textContent = conv.name;
         tab.appendChild(nameSpan);
 
         if (ids.length > 1) {
-          const closeBtn = document.createElement('span');
+          const closeBtn = document.createElement('button');
+          closeBtn.type = 'button';
           closeBtn.className = 'close-conv';
           closeBtn.textContent = '\u00d7';
+          closeBtn.setAttribute('aria-label', `Close conversation: ${conv.name}`);
           closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeConversation(id); });
           tab.appendChild(closeBtn);
         }
@@ -490,13 +912,16 @@
       chatEl.innerHTML = '';
       const conv = conversations[activeConvId];
       if (!conv) return;
-      conv.messages.forEach(m => appendMessage(m.role, m.content));
+      conv.messages.forEach(m => appendMessage(m.role, m.content, { animate: false }));
     }
 
-    function appendMessage(role, content) {
+    function appendMessage(role, content, { animate = true } = {}) {
       const div = document.createElement('div');
-      div.className = `msg ${role}`;
+      div.className = `msg ${role}` + (animate ? ' msg--enter' : '');
       div.innerHTML = renderMarkdown(content);
+      if (animate) {
+        div.addEventListener('animationend', () => div.classList.remove('msg--enter'), { once: true });
+      }
       chatEl.appendChild(div);
       chatEl.scrollTop = chatEl.scrollHeight;
       return div;
@@ -531,10 +956,8 @@
       try {
         await fetch(`/api/memory/${sessionId}`, { method: 'DELETE' });
         const notice = document.createElement('div');
-        notice.className = 'msg assistant';
-        notice.style.background = '#fff5f5';
-        notice.style.borderLeft = '4px solid #c0392b';
-        notice.innerHTML = '<p><strong>Conversation memory cleared.</strong> Starting fresh.</p>';
+        notice.className = 'system-notice warning';
+        notice.textContent = 'Memory cleared. Starting fresh.';
         chatEl.appendChild(notice);
         chatEl.scrollTop = chatEl.scrollHeight;
       } catch (err) {
@@ -572,9 +995,23 @@
         r.addEventListener('error', () => { listening = false; micBtn.classList.remove('active'); recognition = null; });
         return r;
       }
+      function updateMicState(isListening) {
+        listening = isListening;
+        micBtn.classList.toggle('active', isListening);
+        micBtn.setAttribute('aria-pressed', isListening ? 'true' : 'false');
+        micBtn.setAttribute('aria-label', isListening ? 'Stop voice input' : 'Start voice input');
+      }
+      // Re-wire recognition end/error to update aria state
+      const origCreate = createRecognition;
+      createRecognition = function() {
+        const r = origCreate();
+        r.addEventListener('end', () => { recognition = null; updateMicState(false); });
+        r.addEventListener('error', () => { recognition = null; updateMicState(false); });
+        return r;
+      };
       micBtn.addEventListener('click', () => {
         if (listening && recognition) { recognition.stop(); }
-        else { recognition = createRecognition(); recognition.start(); listening = true; micBtn.classList.add('active'); }
+        else { recognition = createRecognition(); recognition.start(); updateMicState(true); }
       });
     }
 
@@ -598,6 +1035,7 @@
 
       let assistantText = '';
       let assistantDiv = null;
+      let failed = false;
 
       try {
         const res = await fetch('/api/chat', {
@@ -605,6 +1043,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: conv.messages, session_id: sessionId }),
         });
+
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}`);
+        }
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -632,10 +1074,8 @@
               if (data.tasksCreated) {
                 const count = data.tasksCreated.length;
                 const notice = document.createElement('div');
-                notice.className = 'msg assistant';
-                notice.style.background = '#e8f5e9';
-                notice.style.borderLeft = '4px solid #27ae60';
-                notice.innerHTML = `<p><strong>${count} task${count !== 1 ? 's' : ''} created in the Tasks tab.</strong></p>`;
+                notice.className = 'system-notice success';
+                notice.textContent = `${count} task${count !== 1 ? 's' : ''} created in Tasks.`;
                 chatEl.appendChild(notice);
                 chatEl.scrollTop = chatEl.scrollHeight;
               }
@@ -644,12 +1084,30 @@
         }
       } catch (err) {
         hideTyping();
-        assistantText = 'Something went wrong. Try again.';
-        appendMessage('assistant', assistantText);
+        failed = true;
+        const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+        const msg = offline
+          ? "You appear to be offline. Check your connection and try again."
+          : `Couldn't reach Ranch Hand. ${err && err.message ? err.message + '. ' : ''}Tap retry below.`;
+        const errDiv = appendMessage('assistant', msg);
+        errDiv.setAttribute('role', 'alert');
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.textContent = 'Retry';
+        retry.className = 'retry-btn';
+        retry.addEventListener('click', () => {
+          // Pop the failed user message back into input for retry
+          const lastUser = conv.messages.filter(m => m.role === 'user').pop();
+          if (lastUser) { inputEl.value = lastUser.content; inputEl.dispatchEvent(new Event('input')); inputEl.focus(); }
+          errDiv.remove();
+        });
+        errDiv.appendChild(document.createElement('br'));
+        errDiv.appendChild(retry);
+        console.error('Chat request failed:', err);
       }
 
       hideTyping();
-      if (assistantText) {
+      if (assistantText && !failed) {
         const cleanText = assistantText.replace(/```tasks\s*\n[\s\S]*?```/g, '').trim();
         conv.messages.push({ role: 'assistant', content: cleanText });
         saveConversations();
@@ -699,7 +1157,6 @@
     function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
     // ── Task Tracker ──
-    const MEMBERS = ['Grant', 'Patrick', 'Aaron', 'Cesar', 'Jon Michael', 'Julian'];
     let cachedTasks = [];
 
     async function fetchTasks() {
@@ -732,30 +1189,30 @@
 
     function renderTaskCards() {
       const container = document.getElementById('task-cards');
-      if (cachedTasks.length === 0) { container.innerHTML = '<p style="color:#999;font-size:0.9rem;">No tasks yet. Add one above.</p>'; return; }
+      if (cachedTasks.length === 0) { container.innerHTML = '<p class="tasks-empty">No tasks yet. Add one above.</p>'; return; }
       const statusMap = { 'pending': 0, 'in-progress': 1, 'done': 2 };
       const sorted = [...cachedTasks].sort((a, b) => (statusMap[a.status] || 0) - (statusMap[b.status] || 0));
       container.innerHTML = sorted.map(t => {
         const overdue = isOverdue(t);
         const s = (t.status || 'pending').toLowerCase();
-        const statusClass = s === 'in-progress' ? 'status-in-progress' : s === 'done' ? 'status-done' : '';
         const badgeClass = s === 'in-progress' ? 'in-progress' : s === 'done' ? 'done' : 'pending';
         const displayStatus = s === 'in-progress' ? 'In Progress' : s === 'done' ? 'Done' : 'Pending';
-        return `<div class="task-card ${statusClass} ${overdue ? 'overdue' : ''}">
+        const safeTitle = escapeHtml(t.title);
+        return `<article class="task-card${overdue ? ' overdue' : ''}" aria-label="${safeTitle}, ${displayStatus}${overdue ? ', overdue' : ''}">
           <div class="task-card-header">
-            <div class="task-title">${escapeHtml(t.title)}</div>
+            <div class="task-title">${safeTitle}</div>
             <div class="task-card-actions">
-              <button onclick="editTask(${t.id})" title="Edit">&#9998;</button>
-              <button onclick="deleteTask(${t.id})" title="Delete">&#10005;</button>
+              <button type="button" onclick="editTask(${t.id})" aria-label="Edit task: ${safeTitle}" title="Edit">&#9998;</button>
+              <button type="button" onclick="deleteTask(${t.id})" aria-label="Delete task: ${safeTitle}" title="Delete">&#10005;</button>
             </div>
           </div>
           <div class="task-meta">
             <span>${escapeHtml(t.assigned_to || 'Unassigned')}</span>
             <span>${t.due_date ? formatDate(t.due_date) : 'No due date'}</span>
             <span class="status-badge ${badgeClass}">${displayStatus}</span>
-            ${overdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
+            ${overdue ? '<span class="overdue-badge" aria-hidden="true">OVERDUE</span>' : ''}
           </div>
-        </div>`;
+        </article>`;
       }).join('');
     }
 
@@ -776,20 +1233,34 @@
     function sendTaskEmail(assignee, task, dueDate) {
       if (!assignee) return;
       fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assignee, task, dueDate: dueDate || '', assignedBy: 'Ranch Hand Tasks' }) })
-      .then(r => r.json()).then(data => console.log('Email result:', data)).catch(err => console.error('Email error:', err));
+      .catch(err => console.error('Email error:', err));
     }
 
-    document.getElementById('tf-save').addEventListener('click', async () => {
+    const tfSaveBtn = document.getElementById('tf-save');
+    taskForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
       const title = tfTitle.value.trim();
-      if (!title) return;
+      if (!title) { tfTitle.focus(); return; }
       const editId = tfEditId.value;
       const isNew = !editId;
       const statusMap = { 'Pending': 'pending', 'In Progress': 'in-progress', 'Done': 'done' };
       const payload = { title, assigned_to: tfAssignee.value, due_date: tfDue.value, status: statusMap[tfStatus.value] || 'pending' };
+      tfSaveBtn.disabled = true;
+      tfSaveBtn.textContent = 'Saving…';
       try {
-        if (editId) { await fetch(`/api/tasks/${editId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
-        else { await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
-      } catch {}
+        const url = editId ? `/api/tasks/${editId}` : '/api/tasks';
+        const method = editId ? 'PATCH' : 'POST';
+        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error(`Save failed (${res.status})`);
+      } catch (err) {
+        console.error('Task save failed:', err);
+        alert(`Couldn't save task. ${err && err.message ? err.message : 'Try again.'}`);
+        tfSaveBtn.disabled = false;
+        tfSaveBtn.textContent = 'Save';
+        return;
+      }
+      tfSaveBtn.disabled = false;
+      tfSaveBtn.textContent = 'Save';
       taskForm.classList.remove('open');
       await renderTasks(); renderCalendar();
       if (isNew && tfAssignee.value) sendTaskEmail(tfAssignee.value, title, tfDue.value);
@@ -803,7 +1274,17 @@
     };
 
     window.deleteTask = async function(id) {
-      try { await fetch(`/api/tasks/${id}`, { method: 'DELETE' }); } catch {}
+      const t = cachedTasks.find(t => t.id === id);
+      const label = t ? t.title : 'this task';
+      if (!confirm(`Delete "${label}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+      } catch (err) {
+        console.error('Task delete failed:', err);
+        alert(`Couldn't delete task. ${err && err.message ? err.message : 'Try again.'}`);
+        return;
+      }
       await renderTasks(); renderCalendar();
     };
 
@@ -838,14 +1319,17 @@
         }
       });
       let html = '';
-      ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => { html += `<div class="cal-day-label">${d}</div>`; });
-      for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+      ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => { html += `<div class="cal-day-label" role="columnheader">${d}</div>`; });
+      for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty" aria-hidden="true"></div>';
       for (let d = 1; d <= daysInMonth; d++) {
         const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
         const hasTasks = tasksByDay[d];
         const hasOverdue = hasTasks && hasTasks.some(t => isOverdue(t));
         const cls = ['cal-day']; if (isToday) cls.push('today'); if (hasOverdue) cls.push('has-overdue');
-        html += `<div class="${cls.join(' ')}" data-day="${d}">${d}${hasTasks ? '<div class="cal-dot"></div>' : ''}</div>`;
+        const dateLabel = new Date(calYear, calMonth, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        const taskCount = hasTasks ? hasTasks.length : 0;
+        const aria = `${dateLabel}${taskCount ? `, ${taskCount} task${taskCount === 1 ? '' : 's'}${hasOverdue ? ', overdue' : ''}` : ''}`;
+        html += `<button type="button" class="${cls.join(' ')}" data-day="${d}" aria-label="${aria}"${isToday ? ' aria-current="date"' : ''}>${d}${hasTasks ? '<div class="cal-dot" aria-hidden="true"></div>' : ''}</button>`;
       }
       calGrid.innerHTML = html;
       calPopup.classList.remove('open');
@@ -857,7 +1341,7 @@
           calPopupTitle.textContent = new Date(calYear, calMonth, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
           const sd = { 'pending': 'Pending', 'in-progress': 'In Progress', 'done': 'Done' };
           calPopupList.innerHTML = dayTasks.map(t =>
-            `<li><strong>${escapeHtml(t.title)}</strong> — ${escapeHtml(t.assigned_to || 'Unassigned')} <span class="status-badge ${t.status === 'in-progress' ? 'in-progress' : t.status === 'done' ? 'done' : 'pending'}" style="font-size:0.7rem;">${sd[t.status] || t.status}</span></li>`
+            `<li><strong>${escapeHtml(t.title)}</strong> — ${escapeHtml(t.assigned_to || 'Unassigned')} <span class="status-badge ${t.status === 'in-progress' ? 'in-progress' : t.status === 'done' ? 'done' : 'pending'}">${sd[t.status] || t.status}</span></li>`
           ).join('');
           calPopup.classList.add('open');
         });
