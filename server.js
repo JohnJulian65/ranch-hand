@@ -4,12 +4,17 @@ const cors = require('cors');
 const Anthropic = require('@anthropic-ai/sdk');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const { Resend } = require('resend');
 const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const DEFAULT_PIN = '1234';
+const BCRYPT_ROUNDS = 10;
+const isBcryptHash = (s) => typeof s === 'string' && /^\$2[aby]\$/.test(s);
 
 app.use(cors());
 app.use(express.json());
@@ -75,10 +80,11 @@ async function initDb() {
     await db.execute(CREATE_TASKS_TABLE);
     await db.execute(CREATE_MEMORY_TABLE);
     await db.execute(CREATE_USERS_TABLE);
+    const defaultPinHashTurso = await bcrypt.hash(DEFAULT_PIN, BCRYPT_ROUNDS);
     for (const [name, email] of Object.entries(MEMBER_EMAILS)) {
       await db.execute({
         sql: 'INSERT OR IGNORE INTO users (name, pin, email) VALUES (?, ?, ?)',
-        args: [name, '1234', email],
+        args: [name, defaultPinHashTurso, email],
       });
     }
     console.log('[DB] Connected to Turso');
@@ -120,14 +126,27 @@ async function initDb() {
     sqlDb.run(CREATE_TASKS_TABLE);
     sqlDb.run(CREATE_MEMORY_TABLE);
     sqlDb.run(CREATE_USERS_TABLE);
+    const defaultPinHashLocal = await bcrypt.hash(DEFAULT_PIN, BCRYPT_ROUNDS);
     for (const [name, email] of Object.entries(MEMBER_EMAILS)) {
       sqlDb.run(
         'INSERT OR IGNORE INTO users (name, pin, email) VALUES (?, ?, ?)',
-        [name, '1234', email]
+        [name, defaultPinHashLocal, email]
       );
     }
     saveDb();
     console.log('[DB] Using local sql.js at', DB_PATH);
+  }
+
+  // Migration: hash any PINs left over from the plaintext era.
+  // Runs once — idempotent, detected by the $2a/$2b/$2y bcrypt prefix.
+  const rows = await dbAll('SELECT id, pin FROM users');
+  for (const row of rows) {
+    const pin = row.pin == null ? '' : String(row.pin);
+    if (pin && !isBcryptHash(pin)) {
+      const hashed = await bcrypt.hash(pin, BCRYPT_ROUNDS);
+      await dbRun('UPDATE users SET pin = ? WHERE id = ?', [hashed, row.id]);
+      console.log(`[Auth] Hashed legacy PIN for user id=${row.id}`);
+    }
   }
 }
 
@@ -294,17 +313,14 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'name and pin are required' });
   }
   const user = await dbGet(
-    'SELECT id, name, email, pin FROM users WHERE name = ? AND pin = ?',
-    [String(name), String(pin)]
+    'SELECT id, name, email, pin FROM users WHERE name = ?',
+    [String(name)]
   );
-  if (!user) {
+  if (!user || !(await bcrypt.compare(String(pin), user.pin))) {
     return res.status(401).json({ error: 'Invalid name or PIN' });
   }
-  res.json({
-    name: user.name,
-    email: user.email,
-    mustChangePin: user.pin === '1234',
-  });
+  const mustChangePin = await bcrypt.compare(DEFAULT_PIN, user.pin);
+  res.json({ name: user.name, email: user.email, mustChangePin });
 });
 
 app.post('/api/change-pin', async (req, res) => {
@@ -315,20 +331,18 @@ app.post('/api/change-pin', async (req, res) => {
   if (!/^\d{4}$/.test(String(newPin))) {
     return res.status(400).json({ error: 'New PIN must be exactly 4 digits' });
   }
-  if (String(newPin) === '1234') {
+  if (String(newPin) === DEFAULT_PIN) {
     return res.status(400).json({ error: 'New PIN cannot be 1234' });
   }
   if (String(newPin) === String(currentPin)) {
     return res.status(400).json({ error: 'New PIN must differ from current PIN' });
   }
-  const user = await dbGet(
-    'SELECT id FROM users WHERE name = ? AND pin = ?',
-    [String(name), String(currentPin)]
-  );
-  if (!user) {
+  const user = await dbGet('SELECT id, pin FROM users WHERE name = ?', [String(name)]);
+  if (!user || !(await bcrypt.compare(String(currentPin), user.pin))) {
     return res.status(401).json({ error: 'Current PIN is incorrect' });
   }
-  await dbRun('UPDATE users SET pin = ? WHERE id = ?', [String(newPin), user.id]);
+  const newHash = await bcrypt.hash(String(newPin), BCRYPT_ROUNDS);
+  await dbRun('UPDATE users SET pin = ? WHERE id = ?', [newHash, user.id]);
   res.json({ ok: true });
 });
 
