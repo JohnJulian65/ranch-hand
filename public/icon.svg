@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ranch Hand">
+  <rect width="512" height="512" rx="96" ry="96" fill="#1a1815"/>
+  <text x="256" y="256"
+        font-family="Libre Caslon Display, Iowan Old Style, Baskerville, Georgia, serif"
+        font-size="260"
+        font-weight="400"
+        fill="#C9A84C"
+        text-anchor="middle"
+        dominant-baseline="central"
+        letter-spacing="-4">RH</text>
+</svg>
