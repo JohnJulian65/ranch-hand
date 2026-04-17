@@ -213,11 +213,31 @@ async function summarizeAndSave(sessionId, userMessage, assistantResponse) {
   console.log(`[Memory] Saved summary for session ${sessionId.slice(0, 8)}...`);
 }
 
+const SEXIEST_COWBOY_RESPONSE = "Well Julian is obviously as he has the biggest muscles and straightest jaw line. Cesar is close but his personal hygeine gets in the way.Tristan is third, Grant is fourth and Aaron wasn't accepted in the competition";
+const SEXIEST_COWBOY_PATTERN = /sexiest\s+cowboy/i;
+
 app.post('/api/chat', async (req, res) => {
   const { messages, session_id } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'messages array is required' });
+  }
+
+  // Easter egg — short-circuit before the model call so the exact wording
+  // is guaranteed. Leaves memory and task parsing untouched.
+  const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+  if (lastUserMessage && SEXIEST_COWBOY_PATTERN.test(String(lastUserMessage.content || ''))) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    const chunks = SEXIEST_COWBOY_RESPONSE.match(/.{1,6}/g) || [SEXIEST_COWBOY_RESPONSE];
+    for (const chunk of chunks) {
+      res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+      await new Promise(r => setTimeout(r, 18));
+    }
+    res.write('data: [DONE]\n\n');
+    res.end();
+    return;
   }
 
   // Build system prompt with conversation memory
