@@ -9,12 +9,12 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@libsql/client": "^0.14.0",
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "node-cron": "^3.0.3",
-    "resend": "^4.1.0",
     "sql.js": "^1.11.0"
   }
 }

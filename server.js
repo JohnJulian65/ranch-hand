@@ -6,8 +6,12 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
-const { Resend } = require('resend');
+const sgMail = require('@sendgrid/mail');
 const cron = require('node-cron');
+
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -179,7 +183,7 @@ function emailsForAssignees(names) {
   return names.map(n => MEMBER_EMAILS[n]).filter(Boolean);
 }
 
-const FROM_ADDRESS = process.env.RESEND_FROM || 'onboarding@resend.dev';
+const FROM_ADDRESS = process.env.EMAIL_FROM || 'onboarding@example.com';
 
 // Load all context files as system prompt
 const contextDir = path.join(__dirname, 'context');
@@ -359,15 +363,14 @@ app.post('/api/send-email', async (req, res) => {
     return res.json({ sent: false, reason: 'No emails on file for: ' + names.join(', ') });
   }
 
-  if (!process.env.RESEND_API_KEY) {
-    return res.status(500).json({ error: 'RESEND_API_KEY is not configured' });
+  if (!process.env.SENDGRID_API_KEY) {
+    return res.status(500).json({ error: 'SENDGRID_API_KEY is not configured' });
   }
 
   const assigneeDisplay = names.join(', ');
 
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const result = await resend.emails.send({
+    const result = await sgMail.send({
       from: FROM_ADDRESS,
       to: emails,
       subject: 'Ranch Hand — New Task Assigned to You',
@@ -386,8 +389,8 @@ app.post('/api/send-email', async (req, res) => {
       `,
     });
 
-    console.log('Resend response:', JSON.stringify(result));
-    res.json({ sent: true, recipients: emails, result });
+    console.log('SendGrid response status:', result?.[0]?.statusCode);
+    res.json({ sent: true, recipients: emails });
   } catch (err) {
     console.error('Email send error:', err.message);
     res.status(500).json({ error: 'Failed to send email' });
@@ -487,9 +490,8 @@ app.delete('/api/tasks/:id', async (req, res) => {
 
 async function sendReminderEmail(task, type) {
   const emails = (task.assigned_email || '').split(',').map(e => e.trim()).filter(Boolean);
-  if (emails.length === 0 || !process.env.RESEND_API_KEY) return;
+  if (emails.length === 0 || !process.env.SENDGRID_API_KEY) return;
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
   const isOverdue = type === 'overdue';
 
   const subject = isOverdue
@@ -507,7 +509,7 @@ async function sendReminderEmail(task, type) {
   const accentColor = isOverdue ? '#c0392b' : '#C9A84C';
 
   try {
-    await resend.emails.send({
+    await sgMail.send({
       from: FROM_ADDRESS,
       to: emails,
       subject,
@@ -593,8 +595,8 @@ function taskSection(title, tasks, color, emptyMsg) {
 
 async function sendWeeklyDigest() {
   const emails = (process.env.LEADERSHIP_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-  if (emails.length === 0 || !process.env.RESEND_API_KEY) {
-    console.log('[Digest] No LEADERSHIP_EMAILS or RESEND_API_KEY configured, skipping');
+  if (emails.length === 0 || !process.env.SENDGRID_API_KEY) {
+    console.log('[Digest] No LEADERSHIP_EMAILS or SENDGRID_API_KEY configured, skipping');
     return;
   }
 
@@ -663,11 +665,9 @@ async function sendWeeklyDigest() {
     </div>
   `;
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
   for (const email of emails) {
     try {
-      await resend.emails.send({
+      await sgMail.send({
         from: FROM_ADDRESS,
         to: email,
         subject: `Ranch Hand — Weekly Briefing: ${mondayDate}`,
