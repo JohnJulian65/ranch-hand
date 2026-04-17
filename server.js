@@ -42,6 +42,16 @@ async function initDb() {
     )
   `;
 
+  const CREATE_USERS_TABLE = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      pin TEXT NOT NULL,
+      email TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `;
+
   if (process.env.TURSO_DATABASE_URL) {
     // Production: Turso (libsql over HTTP)
     const { createClient } = require('@libsql/client/web');
@@ -64,6 +74,13 @@ async function initDb() {
 
     await db.execute(CREATE_TASKS_TABLE);
     await db.execute(CREATE_MEMORY_TABLE);
+    await db.execute(CREATE_USERS_TABLE);
+    for (const [name, email] of Object.entries(MEMBER_EMAILS)) {
+      await db.execute({
+        sql: 'INSERT OR IGNORE INTO users (name, pin, email) VALUES (?, ?, ?)',
+        args: [name, '1234', email],
+      });
+    }
     console.log('[DB] Connected to Turso');
   } else {
     // Local dev: sql.js (in-memory with file persistence)
@@ -102,6 +119,13 @@ async function initDb() {
 
     sqlDb.run(CREATE_TASKS_TABLE);
     sqlDb.run(CREATE_MEMORY_TABLE);
+    sqlDb.run(CREATE_USERS_TABLE);
+    for (const [name, email] of Object.entries(MEMBER_EMAILS)) {
+      sqlDb.run(
+        'INSERT OR IGNORE INTO users (name, pin, email) VALUES (?, ?, ?)',
+        [name, '1234', email]
+      );
+    }
     saveDb();
     console.log('[DB] Using local sql.js at', DB_PATH);
   }
@@ -262,6 +286,21 @@ app.post('/api/chat', async (req, res) => {
       res.end();
     }
   }
+});
+
+app.post('/api/login', async (req, res) => {
+  const { name, pin } = req.body || {};
+  if (!name || !pin) {
+    return res.status(400).json({ error: 'name and pin are required' });
+  }
+  const user = await dbGet(
+    'SELECT id, name, email FROM users WHERE name = ? AND pin = ?',
+    [String(name), String(pin)]
+  );
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid name or PIN' });
+  }
+  res.json({ name: user.name, email: user.email });
 });
 
 app.post('/api/send-email', async (req, res) => {

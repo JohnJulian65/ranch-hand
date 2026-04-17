@@ -743,6 +743,143 @@
       .calendar-section { margin-top: 24px; }
     }
 
+    /* ── Login Screen ── */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--c-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      animation: fade-in var(--dur-base) var(--ease-out-quart);
+    }
+    #login-screen[hidden] { display: none; }
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--c-surface);
+      border-radius: 14px;
+      padding: 32px 28px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      animation: rise var(--dur-slow) var(--ease-out-expo);
+    }
+    .login-brand {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .login-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 400;
+      color: var(--c-gold-deep);
+      line-height: 1;
+      letter-spacing: 0.005em;
+    }
+    .login-subtitle {
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-medium);
+      color: var(--c-ink-3);
+      margin-top: 6px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    #login-form label {
+      display: block;
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--c-ink-2);
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    #login-form label:first-child { margin-top: 0; }
+    #login-form select,
+    #login-form input {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid var(--c-line-strong);
+      border-radius: 8px;
+      font-size: var(--fs-base);
+      font-family: inherit;
+      background: var(--c-surface);
+      color: var(--c-ink);
+      outline: none;
+      transition: border-color var(--dur-fast) var(--ease-out-quart);
+    }
+    #login-form select:focus,
+    #login-form input:focus { border-color: var(--c-gold); }
+    #login-form input[type="password"] {
+      letter-spacing: 0.4em;
+      font-variant-numeric: tabular-nums;
+    }
+    .login-btn {
+      width: 100%;
+      margin-top: 22px;
+      padding: 12px;
+      background: var(--c-gold);
+      color: var(--c-ink);
+      border: none;
+      border-radius: 10px;
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: inherit;
+      transition:
+        background var(--dur-fast) var(--ease-out-quart),
+        transform var(--dur-fast) var(--ease-out-quart);
+    }
+    .login-btn:hover:not(:disabled) { background: var(--c-gold-hover); }
+    .login-btn:active:not(:disabled) { transform: scale(0.97); }
+    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .login-error {
+      margin-top: 14px;
+      padding: 9px 12px;
+      background: var(--c-danger-bg);
+      color: var(--c-danger-text);
+      border-radius: 8px;
+      font-size: var(--fs-sm);
+      text-align: center;
+    }
+
+    /* ── User controls in header ── */
+    header .user-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .user-name {
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-medium);
+      color: var(--c-on-dark-2);
+      letter-spacing: 0.02em;
+    }
+    .logout-btn {
+      background: transparent;
+      color: var(--c-on-dark-2);
+      border: 1px solid var(--c-on-dark-2);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: inherit;
+      transition:
+        color var(--dur-fast) var(--ease-out-quart),
+        border-color var(--dur-fast) var(--ease-out-quart),
+        background var(--dur-fast) var(--ease-out-quart);
+    }
+    .logout-btn:hover {
+      color: var(--c-gold);
+      border-color: var(--c-gold);
+    }
+
     /* Landscape phones & narrow tablets: fewer rows of chrome stealing
        vertical space. Trim header/tab padding when the viewport is short. */
     @media (max-height: 600px) {
@@ -754,10 +891,42 @@
   </style>
 </head>
 <body>
+  <div id="login-screen" role="dialog" aria-modal="true" aria-labelledby="login-title" hidden>
+    <div class="login-card">
+      <div class="login-brand">
+        <div id="login-title" class="login-title">Ranch Hand</div>
+        <div class="login-subtitle">Capitol Cowboys Operations</div>
+      </div>
+      <form id="login-form" autocomplete="off">
+        <label for="login-name">Who's riding?</label>
+        <select id="login-name" required>
+          <option value="" disabled selected>Select your name</option>
+          <option>Grant</option>
+          <option>Patrick</option>
+          <option>Aaron</option>
+          <option>Cesar</option>
+          <option>Jon Michael</option>
+          <option>Julian</option>
+          <option>Nico</option>
+          <option>Tristan</option>
+          <option>Ryan</option>
+        </select>
+        <label for="login-pin">4-Digit PIN</label>
+        <input type="password" id="login-pin" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" required>
+        <button type="submit" class="login-btn" id="login-submit">Enter</button>
+        <div class="login-error" id="login-error" hidden role="alert"></div>
+      </form>
+    </div>
+  </div>
+
   <header>
     <div>
       <h1>Ranch Hand</h1>
       <p>Capitol Cowboys Operations</p>
+    </div>
+    <div class="user-controls">
+      <span class="user-name" id="user-name-display"></span>
+      <button type="button" class="logout-btn" id="logout-btn">Log out</button>
     </div>
   </header>
 
@@ -892,12 +1061,25 @@
     let conversations = {};   // { id: { name, messages: [] } }
     let activeConvId = null;
     let sending = false;
+    let currentUser = null;   // { name, email }
+    let sessionId = null;     // derived from currentUser.name
 
-    // Persistent session ID for conversation memory
-    let sessionId = localStorage.getItem('rh_session_id');
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      localStorage.setItem('rh_session_id', sessionId);
+    // Normalize a member name to a stable slug used for per-user storage keys
+    // and server-side conversation memory scoping.
+    function userSlug(name) {
+      return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+    function convosKey(name) { return 'rh_convos_' + userSlug(name); }
+    function sessionIdFor(name) { return 'user-' + userSlug(name); }
+
+    function loadCurrentUser() {
+      try {
+        const raw = localStorage.getItem('rh_user');
+        if (!raw) return null;
+        const user = JSON.parse(raw);
+        if (!user || !user.name) return null;
+        return user;
+      } catch { return null; }
     }
 
     const GREETING = "Hey \u2014 I'm Ranch Hand. What do you need?";
@@ -905,31 +1087,15 @@
     function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
 
     function loadConversations() {
+      conversations = {};
+      activeConvId = null;
+      if (!currentUser) return;
       try {
-        const raw = localStorage.getItem('rh_convos');
+        const raw = localStorage.getItem(convosKey(currentUser.name));
         if (raw) {
           const data = JSON.parse(raw);
           conversations = data.conversations || {};
           activeConvId = data.activeId || null;
-          // Migrate old single-chat format
-          if (Object.keys(conversations).length === 0) {
-            const oldMsgs = JSON.parse(localStorage.getItem('rh_messages') || '[]');
-            if (oldMsgs.length > 0) {
-              const id = genId();
-              const firstUser = oldMsgs.find(m => m.role === 'user');
-              conversations[id] = { name: firstUser ? firstUser.content.slice(0, 30) : 'Chat', messages: oldMsgs };
-              activeConvId = id;
-            }
-          }
-        } else {
-          // Try migrating old single-conversation localStorage
-          const oldMsgs = JSON.parse(localStorage.getItem('rh_messages') || '[]');
-          if (oldMsgs.length > 0) {
-            const id = genId();
-            const firstUser = oldMsgs.find(m => m.role === 'user');
-            conversations[id] = { name: firstUser ? firstUser.content.slice(0, 30) : 'Chat', messages: oldMsgs };
-            activeConvId = id;
-          }
         }
       } catch {}
 
@@ -941,7 +1107,11 @@
     }
 
     function saveConversations() {
-      localStorage.setItem('rh_convos', JSON.stringify({ conversations, activeId: activeConvId }));
+      if (!currentUser) return;
+      localStorage.setItem(
+        convosKey(currentUser.name),
+        JSON.stringify({ conversations, activeId: activeConvId })
+      );
     }
 
     function createConversation() {
@@ -1226,13 +1396,101 @@
       inputEl.focus();
     }
 
-    // ── Init ──
-    window.addEventListener('DOMContentLoaded', () => {
+    // ── Auth (login / logout) ──
+    const loginScreen = document.getElementById('login-screen');
+    const loginForm = document.getElementById('login-form');
+    const loginNameSel = document.getElementById('login-name');
+    const loginPinInp = document.getElementById('login-pin');
+    const loginSubmit = document.getElementById('login-submit');
+    const loginError = document.getElementById('login-error');
+    const logoutBtn = document.getElementById('logout-btn');
+    const userNameDisplay = document.getElementById('user-name-display');
+
+    function showLogin() {
+      currentUser = null;
+      sessionId = null;
+      loginScreen.hidden = false;
+      loginError.hidden = true;
+      loginError.textContent = '';
+      loginForm.reset();
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => loginNameSel.focus(), 0);
+    }
+
+    function hideLogin() {
+      loginScreen.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function applyUser(user) {
+      currentUser = user;
+      sessionId = sessionIdFor(user.name);
+      userNameDisplay.textContent = user.name;
+    }
+
+    function initApp(user) {
+      applyUser(user);
+      hideLogin();
       loadConversations();
       renderConvTabs();
       renderChat();
       renderTasks();
       renderCalendar();
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = loginNameSel.value;
+      const pin = loginPinInp.value.trim();
+      if (!name || !/^\d{4}$/.test(pin)) {
+        loginError.textContent = 'Select your name and enter a 4-digit PIN.';
+        loginError.hidden = false;
+        return;
+      }
+      loginError.hidden = true;
+      loginSubmit.disabled = true;
+      loginSubmit.textContent = 'Signing in…';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, pin }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Invalid name or PIN');
+        }
+        const user = await res.json();
+        localStorage.setItem('rh_user', JSON.stringify(user));
+        initApp(user);
+      } catch (err) {
+        loginError.textContent = err.message || 'Could not sign in.';
+        loginError.hidden = false;
+      } finally {
+        loginSubmit.disabled = false;
+        loginSubmit.textContent = 'Enter';
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      if (!confirm('Log out of Ranch Hand?')) return;
+      localStorage.removeItem('rh_user');
+      conversations = {};
+      activeConvId = null;
+      chatEl.innerHTML = '';
+      renderConvTabs();
+      userNameDisplay.textContent = '';
+      showLogin();
+    });
+
+    // ── Init ──
+    window.addEventListener('DOMContentLoaded', () => {
+      const user = loadCurrentUser();
+      if (user) {
+        initApp(user);
+      } else {
+        showLogin();
+      }
     });
 
     function renderMarkdown(text) {
