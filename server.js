@@ -294,13 +294,42 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'name and pin are required' });
   }
   const user = await dbGet(
-    'SELECT id, name, email FROM users WHERE name = ? AND pin = ?',
+    'SELECT id, name, email, pin FROM users WHERE name = ? AND pin = ?',
     [String(name), String(pin)]
   );
   if (!user) {
     return res.status(401).json({ error: 'Invalid name or PIN' });
   }
-  res.json({ name: user.name, email: user.email });
+  res.json({
+    name: user.name,
+    email: user.email,
+    mustChangePin: user.pin === '1234',
+  });
+});
+
+app.post('/api/change-pin', async (req, res) => {
+  const { name, currentPin, newPin } = req.body || {};
+  if (!name || !currentPin || !newPin) {
+    return res.status(400).json({ error: 'name, currentPin, and newPin are required' });
+  }
+  if (!/^\d{4}$/.test(String(newPin))) {
+    return res.status(400).json({ error: 'New PIN must be exactly 4 digits' });
+  }
+  if (String(newPin) === '1234') {
+    return res.status(400).json({ error: 'New PIN cannot be 1234' });
+  }
+  if (String(newPin) === String(currentPin)) {
+    return res.status(400).json({ error: 'New PIN must differ from current PIN' });
+  }
+  const user = await dbGet(
+    'SELECT id FROM users WHERE name = ? AND pin = ?',
+    [String(name), String(currentPin)]
+  );
+  if (!user) {
+    return res.status(401).json({ error: 'Current PIN is incorrect' });
+  }
+  await dbRun('UPDATE users SET pin = ? WHERE id = ?', [String(newPin), user.id]);
+  res.json({ ok: true });
 });
 
 app.post('/api/send-email', async (req, res) => {

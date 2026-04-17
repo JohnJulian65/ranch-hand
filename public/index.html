@@ -850,13 +850,14 @@
     header .user-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
     .user-name {
       font-size: var(--fs-sm);
       font-weight: var(--fw-medium);
       color: var(--c-on-dark-2);
       letter-spacing: 0.02em;
+      margin-right: 4px;
     }
     .logout-btn {
       background: transparent;
@@ -879,6 +880,87 @@
       color: var(--c-gold);
       border-color: var(--c-gold);
     }
+    .icon-btn {
+      background: transparent;
+      color: var(--c-on-dark-2);
+      border: 1px solid var(--c-on-dark-2);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition:
+        color var(--dur-fast) var(--ease-out-quart),
+        border-color var(--dur-fast) var(--ease-out-quart),
+        transform var(--dur-fast) var(--ease-out-quart);
+    }
+    .icon-btn svg { width: 16px; height: 16px; display: block; }
+    .icon-btn:hover { color: var(--c-gold); border-color: var(--c-gold); }
+    .icon-btn:active { transform: scale(0.92) rotate(-12deg); }
+
+    /* ── Set PIN screen (forced first-time change) ── */
+    #set-pin-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--c-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      animation: fade-in var(--dur-base) var(--ease-out-quart);
+    }
+    #set-pin-screen[hidden] { display: none; }
+    .set-pin-intro {
+      font-size: var(--fs-sm);
+      color: var(--c-ink-2);
+      line-height: 1.5;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    /* ── Modal (Change PIN dialog) ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+      padding: 20px;
+      animation: fade-in var(--dur-base) var(--ease-out-quart);
+    }
+    .modal-overlay[hidden] { display: none; }
+    .modal-card {
+      position: relative;
+      width: 100%;
+      max-width: 380px;
+      background: var(--c-surface);
+      border-radius: 14px;
+      padding: 32px 28px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      animation: rise var(--dur-slow) var(--ease-out-expo);
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: var(--c-ink-3);
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-family: inherit;
+    }
+    .modal-close:hover { color: var(--c-ink); background: var(--c-surface-2); }
 
     /* Landscape phones & narrow tablets: fewer rows of chrome stealing
        vertical space. Trim header/tab padding when the viewport is short. */
@@ -919,6 +1001,44 @@
     </div>
   </div>
 
+  <div id="set-pin-screen" role="dialog" aria-modal="true" aria-labelledby="set-pin-title" hidden>
+    <div class="login-card">
+      <div class="login-brand">
+        <div id="set-pin-title" class="login-title">Set Your PIN</div>
+        <div class="login-subtitle">Welcome, <span id="set-pin-name"></span></div>
+      </div>
+      <p class="set-pin-intro">Pick a new 4-digit PIN to secure your account. You can't keep the default 1234.</p>
+      <form id="set-pin-form" autocomplete="off">
+        <label for="set-pin-new">New 4-Digit PIN</label>
+        <input type="password" id="set-pin-new" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="new-password" required>
+        <label for="set-pin-confirm">Confirm New PIN</label>
+        <input type="password" id="set-pin-confirm" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="new-password" required>
+        <button type="submit" class="login-btn" id="set-pin-submit">Save PIN</button>
+        <div class="login-error" id="set-pin-error" hidden role="alert"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="change-pin-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="change-pin-title" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" id="change-pin-close" aria-label="Close">&times;</button>
+      <div class="login-brand">
+        <div id="change-pin-title" class="login-title">Change PIN</div>
+        <div class="login-subtitle">Keep your account secure</div>
+      </div>
+      <form id="change-pin-form" autocomplete="off">
+        <label for="cp-current">Current PIN</label>
+        <input type="password" id="cp-current" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="current-password" required>
+        <label for="cp-new">New 4-Digit PIN</label>
+        <input type="password" id="cp-new" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="new-password" required>
+        <label for="cp-confirm">Confirm New PIN</label>
+        <input type="password" id="cp-confirm" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="new-password" required>
+        <button type="submit" class="login-btn" id="cp-submit">Update PIN</button>
+        <div class="login-error" id="cp-error" hidden role="alert"></div>
+      </form>
+    </div>
+  </div>
+
   <header>
     <div>
       <h1>Ranch Hand</h1>
@@ -926,6 +1046,12 @@
     </div>
     <div class="user-controls">
       <span class="user-name" id="user-name-display"></span>
+      <button type="button" class="icon-btn" id="settings-btn" aria-label="Change PIN" title="Change PIN">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
       <button type="button" class="logout-btn" id="logout-btn">Log out</button>
     </div>
   </header>
@@ -1396,7 +1522,7 @@
       inputEl.focus();
     }
 
-    // ── Auth (login / logout) ──
+    // ── Auth (login / logout / PIN management) ──
     const loginScreen = document.getElementById('login-screen');
     const loginForm = document.getElementById('login-form');
     const loginNameSel = document.getElementById('login-name');
@@ -1406,10 +1532,34 @@
     const logoutBtn = document.getElementById('logout-btn');
     const userNameDisplay = document.getElementById('user-name-display');
 
+    const setPinScreen = document.getElementById('set-pin-screen');
+    const setPinForm = document.getElementById('set-pin-form');
+    const setPinNameSpan = document.getElementById('set-pin-name');
+    const setPinNewInp = document.getElementById('set-pin-new');
+    const setPinConfirmInp = document.getElementById('set-pin-confirm');
+    const setPinSubmit = document.getElementById('set-pin-submit');
+    const setPinError = document.getElementById('set-pin-error');
+
+    const changePinModal = document.getElementById('change-pin-modal');
+    const changePinForm = document.getElementById('change-pin-form');
+    const changePinClose = document.getElementById('change-pin-close');
+    const cpCurrent = document.getElementById('cp-current');
+    const cpNew = document.getElementById('cp-new');
+    const cpConfirm = document.getElementById('cp-confirm');
+    const cpSubmit = document.getElementById('cp-submit');
+    const cpError = document.getElementById('cp-error');
+    const settingsBtn = document.getElementById('settings-btn');
+
+    // Pending user held during forced-change step (after login, before PIN update)
+    let pendingUser = null;
+
     function showLogin() {
       currentUser = null;
       sessionId = null;
+      pendingUser = null;
       loginScreen.hidden = false;
+      setPinScreen.hidden = true;
+      changePinModal.hidden = true;
       loginError.hidden = true;
       loginError.textContent = '';
       loginForm.reset();
@@ -1422,6 +1572,35 @@
       document.body.style.overflow = '';
     }
 
+    function showSetPinScreen(user) {
+      pendingUser = user;
+      setPinNameSpan.textContent = user.name;
+      setPinError.hidden = true;
+      setPinError.textContent = '';
+      setPinForm.reset();
+      loginScreen.hidden = true;
+      setPinScreen.hidden = false;
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => setPinNewInp.focus(), 0);
+    }
+
+    function hideSetPinScreen() {
+      setPinScreen.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function showChangePinModal() {
+      cpError.hidden = true;
+      cpError.textContent = '';
+      changePinForm.reset();
+      changePinModal.hidden = false;
+      setTimeout(() => cpCurrent.focus(), 0);
+    }
+
+    function hideChangePinModal() {
+      changePinModal.hidden = true;
+    }
+
     function applyUser(user) {
       currentUser = user;
       sessionId = sessionIdFor(user.name);
@@ -1431,11 +1610,17 @@
     function initApp(user) {
       applyUser(user);
       hideLogin();
+      hideSetPinScreen();
       loadConversations();
       renderConvTabs();
       renderChat();
       renderTasks();
       renderCalendar();
+    }
+
+    function routeFromStoredUser(user) {
+      if (user.mustChangePin) showSetPinScreen(user);
+      else initApp(user);
     }
 
     loginForm.addEventListener('submit', async (e) => {
@@ -1462,13 +1647,129 @@
         }
         const user = await res.json();
         localStorage.setItem('rh_user', JSON.stringify(user));
-        initApp(user);
+        routeFromStoredUser(user);
       } catch (err) {
         loginError.textContent = err.message || 'Could not sign in.';
         loginError.hidden = false;
       } finally {
         loginSubmit.disabled = false;
         loginSubmit.textContent = 'Enter';
+      }
+    });
+
+    // Forced first-time PIN change. Current PIN is the default 1234.
+    setPinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!pendingUser) return;
+      const newPin = setPinNewInp.value.trim();
+      const confirmPin = setPinConfirmInp.value.trim();
+      if (!/^\d{4}$/.test(newPin)) {
+        setPinError.textContent = 'PIN must be exactly 4 digits.';
+        setPinError.hidden = false;
+        return;
+      }
+      if (newPin === '1234') {
+        setPinError.textContent = "You can't use the default PIN 1234. Pick something else.";
+        setPinError.hidden = false;
+        return;
+      }
+      if (newPin !== confirmPin) {
+        setPinError.textContent = "PINs don't match. Try again.";
+        setPinError.hidden = false;
+        return;
+      }
+      setPinError.hidden = true;
+      setPinSubmit.disabled = true;
+      setPinSubmit.textContent = 'Saving…';
+      try {
+        const res = await fetch('/api/change-pin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: pendingUser.name, currentPin: '1234', newPin }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Could not update PIN');
+        }
+        const updated = { ...pendingUser, mustChangePin: false };
+        localStorage.setItem('rh_user', JSON.stringify(updated));
+        pendingUser = null;
+        initApp(updated);
+      } catch (err) {
+        setPinError.textContent = err.message || 'Could not update PIN.';
+        setPinError.hidden = false;
+      } finally {
+        setPinSubmit.disabled = false;
+        setPinSubmit.textContent = 'Save PIN';
+      }
+    });
+
+    // Voluntary Change PIN from the header gear.
+    settingsBtn.addEventListener('click', showChangePinModal);
+    changePinClose.addEventListener('click', hideChangePinModal);
+    changePinModal.addEventListener('click', (e) => {
+      if (e.target === changePinModal) hideChangePinModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !changePinModal.hidden) hideChangePinModal();
+    });
+
+    changePinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+      const currentPin = cpCurrent.value.trim();
+      const newPin = cpNew.value.trim();
+      const confirmPin = cpConfirm.value.trim();
+      if (!/^\d{4}$/.test(currentPin)) {
+        cpError.textContent = 'Current PIN must be 4 digits.';
+        cpError.hidden = false;
+        return;
+      }
+      if (!/^\d{4}$/.test(newPin)) {
+        cpError.textContent = 'New PIN must be exactly 4 digits.';
+        cpError.hidden = false;
+        return;
+      }
+      if (newPin === '1234') {
+        cpError.textContent = "You can't use 1234 as your PIN.";
+        cpError.hidden = false;
+        return;
+      }
+      if (newPin === currentPin) {
+        cpError.textContent = 'New PIN must be different from current PIN.';
+        cpError.hidden = false;
+        return;
+      }
+      if (newPin !== confirmPin) {
+        cpError.textContent = "New PINs don't match.";
+        cpError.hidden = false;
+        return;
+      }
+      cpError.hidden = true;
+      cpSubmit.disabled = true;
+      cpSubmit.textContent = 'Updating…';
+      try {
+        const res = await fetch('/api/change-pin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: currentUser.name, currentPin, newPin }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Could not update PIN');
+        }
+        hideChangePinModal();
+        const notice = document.createElement('div');
+        notice.className = 'system-notice success';
+        notice.textContent = 'PIN updated.';
+        chatEl.appendChild(notice);
+        chatEl.scrollTop = chatEl.scrollHeight;
+      } catch (err) {
+        cpError.textContent = err.message || 'Could not update PIN.';
+        cpError.hidden = false;
+      } finally {
+        cpSubmit.disabled = false;
+        cpSubmit.textContent = 'Update PIN';
       }
     });
 
@@ -1480,17 +1781,16 @@
       chatEl.innerHTML = '';
       renderConvTabs();
       userNameDisplay.textContent = '';
+      hideChangePinModal();
+      hideSetPinScreen();
       showLogin();
     });
 
     // ── Init ──
     window.addEventListener('DOMContentLoaded', () => {
       const user = loadCurrentUser();
-      if (user) {
-        initApp(user);
-      } else {
-        showLogin();
-      }
+      if (user) routeFromStoredUser(user);
+      else showLogin();
     });
 
     function renderMarkdown(text) {
