@@ -195,8 +195,23 @@
       display: flex;
       flex-shrink: 0;
       background: var(--c-dark);
-      border-bottom: 2px solid var(--c-gold);
+      border-bottom: 1px solid oklch(0.22 0.008 75 / 0.6);
+      position: relative;
       animation: rise var(--dur-slow) var(--ease-out-expo) 60ms both;
+    }
+    .tab-indicator {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      height: 2px;
+      width: 0;
+      background: var(--c-gold);
+      border-radius: 2px;
+      transition:
+        transform var(--dur-base) var(--ease-out-quint),
+        width var(--dur-base) var(--ease-out-quint);
+      pointer-events: none;
+      will-change: transform, width;
     }
     main {
       flex: 1;
@@ -227,8 +242,27 @@
     .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
     .tab-content.active {
       display: flex;
-      animation: rise var(--dur-base) var(--ease-out-quart);
+      animation: tab-fade-in var(--dur-base) var(--ease-out-quint);
     }
+    @keyframes tab-fade-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Staggered entry for cards — up to 10 siblings cascade in 50ms apart */
+    .stagger-in > * {
+      animation: rise var(--dur-base) var(--ease-out-quart) both;
+    }
+    .stagger-in > *:nth-child(1)  { animation-delay:  0ms; }
+    .stagger-in > *:nth-child(2)  { animation-delay: 50ms; }
+    .stagger-in > *:nth-child(3)  { animation-delay: 100ms; }
+    .stagger-in > *:nth-child(4)  { animation-delay: 150ms; }
+    .stagger-in > *:nth-child(5)  { animation-delay: 200ms; }
+    .stagger-in > *:nth-child(6)  { animation-delay: 250ms; }
+    .stagger-in > *:nth-child(7)  { animation-delay: 300ms; }
+    .stagger-in > *:nth-child(8)  { animation-delay: 350ms; }
+    .stagger-in > *:nth-child(9)  { animation-delay: 400ms; }
+    .stagger-in > *:nth-child(n+10) { animation-delay: 450ms; }
 
     /* Chat Conversation Tabs */
     .conv-bar {
@@ -362,6 +396,37 @@
     .msg code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; font-family: var(--font-mono); }
     .msg pre { background: var(--c-dark); color: var(--c-on-dark); padding: 10px 12px; border-radius: 8px; overflow-x: auto; margin: 6px 0; font-size: 0.85em; font-family: var(--font-mono); }
     .msg pre code { background: none; padding: 0; color: inherit; font-family: inherit; }
+    .msg h1, .msg h2, .msg h3 {
+      font-family: var(--font-display);
+      font-weight: 400;
+      letter-spacing: 0.005em;
+      line-height: 1.2;
+      margin: 10px 0 6px;
+    }
+    .msg h1 { font-size: 1.35em; color: var(--c-gold-deep); }
+    .msg h2 { font-size: 1.2em; color: var(--c-ink); }
+    .msg h3 { font-size: 1.05em; color: var(--c-ink); }
+    .msg h1:first-child, .msg h2:first-child, .msg h3:first-child { margin-top: 0; }
+    .msg blockquote {
+      border-left: 3px solid var(--c-gold);
+      background: oklch(0.98 0.015 75);
+      padding: 6px 12px;
+      margin: 6px 0;
+      border-radius: 0 6px 6px 0;
+      color: var(--c-ink-2);
+      font-style: italic;
+    }
+    .msg a {
+      color: var(--c-gold-deep);
+      text-decoration: underline;
+      text-decoration-color: var(--c-gold);
+      text-underline-offset: 2px;
+    }
+    .msg a:hover { color: var(--c-gold-hover); }
+    /* User bubble is on gold — tone down link/heading colors for contrast */
+    .msg.user a { color: var(--c-ink); text-decoration-color: var(--c-ink); }
+    .msg.user h1 { color: var(--c-ink); }
+    .msg.user blockquote { background: oklch(0.80 0.08 75); border-left-color: var(--c-ink); color: var(--c-ink); }
 
     .typing {
       align-self: flex-start;
@@ -375,8 +440,9 @@
     }
 
     .typing span {
-      width: 7px; height: 7px;
-      background: var(--c-ink-3); border-radius: 50%;
+      width: 8px; height: 8px;
+      background: var(--c-gold); border-radius: 50%;
+      box-shadow: 0 0 0 0 oklch(0.76 0.11 75 / 0.4);
       animation: typing-dot 1.25s var(--ease-out-quart) infinite;
     }
     .typing span:nth-child(2) { animation-delay: 0.15s; }
@@ -474,8 +540,46 @@
       padding: 10px 20px; font-size: var(--fs-sm); font-weight: var(--fw-semibold);
       letter-spacing: 0.04em;
       cursor: pointer; margin-bottom: 16px; font-family: inherit;
+      box-shadow: 0 1px 3px oklch(0.22 0.008 75 / 0.08);
     }
-    .add-task-btn:hover { background: var(--c-gold-hover); }
+    .add-task-btn:hover {
+      background: var(--c-gold-hover);
+      transform: scale(1.03);
+      box-shadow: 0 4px 14px oklch(0.22 0.008 75 / 0.14);
+    }
+
+    /* Tasks progress bar — sits above summary row */
+    .tasks-progress {
+      height: 4px;
+      width: 100%;
+      background: var(--c-surface-2);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .tasks-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--c-gold), var(--c-gold-hover));
+      border-radius: 999px;
+      transition: width var(--dur-slow) var(--ease-out-expo);
+    }
+    .tasks-progress-label {
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--c-ink-3);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-variant-numeric: tabular-nums;
+    }
+    .tasks-progress-label b {
+      color: var(--c-ink);
+      font-weight: var(--fw-semibold);
+    }
 
     .task-form {
       display: none; background: var(--c-surface-3);
@@ -611,19 +715,59 @@
     }
     .task-card {
       background: var(--c-surface); border: 1px solid var(--c-line);
+      border-left: 3px solid var(--c-line);
       border-radius: 10px; padding: 14px; position: relative;
+      cursor: pointer;
       transition:
-        transform var(--dur-fast) var(--ease-out-quart),
-        border-color var(--dur-fast) var(--ease-out-quart),
-        box-shadow var(--dur-fast) var(--ease-out-quart);
+        transform var(--dur-base) var(--ease-out-quint),
+        border-color var(--dur-base) var(--ease-out-quart),
+        border-left-color var(--dur-slow) var(--ease-out-quart),
+        box-shadow var(--dur-base) var(--ease-out-quart);
     }
-    .task-card:hover {
-      transform: translateY(-1px);
+    .task-card:hover,
+    .task-card:focus-visible {
+      transform: translateY(-2px);
       border-color: var(--c-line-strong);
-      box-shadow: 0 2px 10px oklch(0.22 0.008 75 / 0.06);
+      box-shadow: 0 6px 18px oklch(0.22 0.008 75 / 0.10);
     }
-    .task-card.overdue { background: var(--c-danger-bg); border-color: var(--c-danger-edge); }
+    .task-card:active { transform: translateY(-1px); }
+    .task-card.overdue { background: var(--c-danger-bg); border-color: var(--c-danger-edge); border-left-color: var(--c-danger); }
     .task-card.overdue:hover { border-color: oklch(0.75 0.1 25); }
+    .task-card.status-pending     { border-left-color: var(--c-pending-text); }
+    .task-card.status-in-progress { border-left-color: var(--c-info); }
+    .task-card.status-done        { border-left-color: var(--c-success); }
+    .task-card.status-done .task-title { color: var(--c-ink-3); text-decoration: line-through; text-decoration-color: var(--c-ink-4); text-decoration-thickness: 1px; }
+
+    /* Assignee row with avatar */
+    .task-assignee {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--c-gold);
+      color: var(--c-ink);
+      font-size: 0.7rem;
+      font-weight: var(--fw-bold);
+      letter-spacing: 0;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      box-shadow: inset 0 -1px 0 oklch(0.60 0.10 70 / 0.35);
+    }
+    .avatar.avatar-unassigned {
+      background: var(--c-surface-2);
+      color: var(--c-ink-3);
+      font-weight: var(--fw-semibold);
+    }
+    .avatar.avatar-multi {
+      background: var(--c-dark);
+      color: var(--c-gold);
+    }
     .task-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .task-title {
       font-weight: var(--fw-semibold);
@@ -720,6 +864,202 @@
     .cal-popup li { padding: 6px 0; border-bottom: 1px solid var(--c-line); }
     .cal-popup li:last-child { border-bottom: none; }
 
+    /* ── Home Dashboard ── */
+    #home-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px 32px;
+    }
+    .home-hero {
+      margin-bottom: 20px;
+      animation: rise var(--dur-slow) var(--ease-out-expo) both;
+    }
+    .home-hero-greeting {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 400;
+      color: var(--c-ink);
+      line-height: 1.1;
+      letter-spacing: 0.005em;
+    }
+    .home-hero-greeting .accent { color: var(--c-gold-deep); }
+    .home-hero-date {
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-ink-3);
+      margin-top: 6px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-line);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: left;
+      font-family: inherit;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      min-height: 92px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition:
+        transform var(--dur-base) var(--ease-out-quint),
+        border-color var(--dur-base) var(--ease-out-quart),
+        box-shadow var(--dur-base) var(--ease-out-quart);
+    }
+    .stat-card:hover,
+    .stat-card:focus-visible {
+      transform: translateY(-2px);
+      border-color: var(--c-line-strong);
+      box-shadow: 0 6px 18px oklch(0.22 0.008 75 / 0.10);
+    }
+    .stat-card:active { transform: translateY(-1px); }
+    .stat-card-label {
+      font-size: 0.7rem;
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-ink-3);
+      line-height: 1.3;
+    }
+    .stat-card-value {
+      font-family: var(--font-display);
+      font-size: 2.1rem;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--c-ink);
+      font-variant-numeric: tabular-nums;
+      margin-top: 6px;
+    }
+    .stat-card-foot {
+      font-size: var(--fs-xs);
+      color: var(--c-ink-3);
+      margin-top: 4px;
+    }
+    .stat-card.overdue       { border-left: 4px solid var(--c-danger); }
+    .stat-card.overdue .stat-card-value { color: var(--c-danger); }
+    .stat-card.overdue .stat-card-label { color: var(--c-danger-text); }
+    .stat-card.week          { border-left: 4px solid var(--c-gold); }
+    .stat-card.week .stat-card-value    { color: var(--c-gold-deep); }
+    .stat-card.done          { border-left: 4px solid var(--c-success); }
+    .stat-card.done .stat-card-value    { color: var(--c-success); }
+    .stat-card.done .stat-card-label    { color: var(--c-success-text); }
+
+    .home-section-head {
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-ink-3);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-line);
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition:
+        transform var(--dur-base) var(--ease-out-quint),
+        border-color var(--dur-base) var(--ease-out-quart),
+        box-shadow var(--dur-base) var(--ease-out-quart);
+    }
+    .activity-item:hover,
+    .activity-item:focus-visible {
+      transform: translateY(-2px);
+      border-color: var(--c-line-strong);
+      box-shadow: 0 4px 14px oklch(0.22 0.008 75 / 0.08);
+    }
+    .activity-item:active { transform: translateY(-1px); }
+    .activity-pill {
+      flex-shrink: 0;
+      font-size: 0.65rem;
+      font-weight: var(--fw-bold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .activity-pill.created { background: var(--c-pending-bg); color: var(--c-pending-text); }
+    .activity-pill.done    { background: var(--c-success-bg); color: var(--c-success-text); }
+    .activity-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .activity-title {
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-semibold);
+      color: var(--c-ink);
+      line-height: 1.35;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .activity-meta {
+      font-size: var(--fs-xs);
+      color: var(--c-ink-3);
+      margin-top: 2px;
+    }
+
+    /* ── Empty states ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--c-ink-3);
+      gap: 14px;
+    }
+    .empty-state svg {
+      width: 72px;
+      height: 72px;
+      color: var(--c-gold);
+      opacity: 0.85;
+    }
+    .empty-state-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 400;
+      color: var(--c-ink);
+      line-height: 1.2;
+    }
+    .empty-state-body {
+      font-size: var(--fs-sm);
+      color: var(--c-ink-3);
+      max-width: 30ch;
+      line-height: 1.5;
+    }
+    .chat-empty-state {
+      margin: auto;
+      padding: 40px 20px;
+    }
+
     /* ── Responsive adaptation ──
        Mobile-first baseline above. On wider viewports, the app
        sits as a centered frame rather than stretching edge-to-edge. */
@@ -734,9 +1074,12 @@
       /* More generous internal padding when we have the room */
       #chat { padding: 20px 24px; }
       #tasks-view { padding: 24px; }
+      #home-view { padding: 28px 24px 40px; }
       #input-bar { padding: 14px 24px; }
       header { padding: 18px 24px; }
       .conv-bar { padding-inline: 12px; }
+      .home-hero-greeting { font-size: 2.2rem; }
+      .stat-card-value { font-size: 2.4rem; }
     }
 
     @media (min-width: 1024px) {
@@ -1066,13 +1409,32 @@
   </header>
 
   <nav class="tab-nav" role="tablist" aria-label="Sections">
-    <button class="active" role="tab" id="chat-tab-btn" aria-selected="true" aria-controls="chat-tab" tabindex="0" data-tab="chat-tab">Chat</button>
+    <button class="active" role="tab" id="home-tab-btn" aria-selected="true" aria-controls="home-tab" tabindex="0" data-tab="home-tab">Home</button>
+    <button role="tab" id="chat-tab-btn" aria-selected="false" aria-controls="chat-tab" tabindex="-1" data-tab="chat-tab">Chat</button>
     <button role="tab" id="tasks-tab-btn" aria-selected="false" aria-controls="tasks-tab" tabindex="-1" data-tab="tasks-tab">Tasks</button>
+    <span class="tab-indicator" id="tab-indicator" aria-hidden="true"></span>
   </nav>
 
   <main>
+    <!-- Home Tab -->
+    <section id="home-tab" class="tab-content active" role="tabpanel" aria-labelledby="home-tab-btn" tabindex="0">
+      <h2 class="sr-only">Home</h2>
+      <div id="home-view">
+        <div class="home-hero">
+          <div class="home-hero-greeting" id="home-greeting">Welcome back</div>
+          <div class="home-hero-date" id="home-date"></div>
+        </div>
+        <div class="stat-grid stagger-in" id="home-stats" role="group" aria-label="Task stats"></div>
+        <div class="home-section-head">
+          <span>Recent activity</span>
+          <span id="home-activity-count" aria-hidden="true"></span>
+        </div>
+        <div class="activity-feed stagger-in" id="home-activity" aria-label="Recent task activity"></div>
+      </div>
+    </section>
+
     <!-- Chat Tab -->
-    <section id="chat-tab" class="tab-content active" role="tabpanel" aria-labelledby="chat-tab-btn" tabindex="0">
+    <section id="chat-tab" class="tab-content" role="tabpanel" aria-labelledby="chat-tab-btn" tabindex="0" hidden>
       <h2 class="sr-only">Chat</h2>
       <div class="conv-bar" id="conv-bar" role="toolbar" aria-label="Conversations">
         <button class="conv-new" id="conv-new" aria-label="New conversation" title="New conversation">+</button>
@@ -1091,6 +1453,13 @@
     <section id="tasks-tab" class="tab-content" role="tabpanel" aria-labelledby="tasks-tab-btn" tabindex="0" hidden>
       <h2 class="sr-only">Tasks</h2>
       <div id="tasks-view">
+        <div class="tasks-progress-label" aria-live="polite">
+          <span>Progress</span>
+          <span><b id="tasks-progress-text">0 / 0</b> · <span id="tasks-progress-pct">0%</span></span>
+        </div>
+        <div class="tasks-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="tasks-progress-bar">
+          <div class="tasks-progress-fill" id="tasks-progress-fill"></div>
+        </div>
         <div class="summary-bar" id="summary-bar" aria-label="Task summary"></div>
         <button class="add-task-btn" id="add-task-btn" type="button">+ Add Task</button>
         <form class="task-form" id="task-form" aria-label="Task editor">
@@ -1134,7 +1503,7 @@
             <button class="btn-cancel" id="tf-cancel" type="button">Cancel</button>
           </div>
         </form>
-        <div class="task-cards" id="task-cards" aria-label="Tasks"></div>
+        <div class="task-cards stagger-in" id="task-cards" aria-label="Tasks"></div>
         <section class="calendar-section" aria-label="Task calendar">
           <div class="cal-header">
             <button id="cal-prev" type="button" aria-label="Previous month">&larr;</button>
@@ -1155,6 +1524,17 @@
     // ── Tab Navigation (ARIA tablist pattern) ──
     const tabBtns = Array.from(document.querySelectorAll('.tab-nav [role="tab"]'));
     const tabContents = document.querySelectorAll('.tab-content');
+    const tabIndicator = document.getElementById('tab-indicator');
+
+    function moveTabIndicator(btn) {
+      if (!tabIndicator || !btn) return;
+      const nav = btn.parentElement;
+      const navRect = nav.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+      const offset = btnRect.left - navRect.left;
+      tabIndicator.style.width = btnRect.width + 'px';
+      tabIndicator.style.transform = `translateX(${offset}px)`;
+    }
 
     function activateTab(btn, { focus = false } = {}) {
       tabBtns.forEach(b => {
@@ -1165,10 +1545,21 @@
       });
       tabContents.forEach(t => {
         const isActive = t.id === btn.dataset.tab;
-        t.classList.toggle('active', isActive);
-        if (isActive) t.removeAttribute('hidden');
-        else t.setAttribute('hidden', '');
+        if (isActive) {
+          // Re-trigger the fade-in animation each time this tab activates
+          t.classList.remove('active');
+          // Force reflow so the animation restarts reliably
+          void t.offsetWidth;
+          t.classList.add('active');
+          t.removeAttribute('hidden');
+        } else {
+          t.classList.remove('active');
+          t.setAttribute('hidden', '');
+        }
       });
+      moveTabIndicator(btn);
+      // Hooks for tab-specific refresh
+      if (btn.dataset.tab === 'home-tab') renderHome();
       if (focus) btn.focus();
     }
 
@@ -1184,6 +1575,12 @@
         e.preventDefault();
         activateTab(target, { focus: true });
       });
+    });
+
+    // Keep indicator aligned if the viewport resizes (rare but possible on rotate)
+    window.addEventListener('resize', () => {
+      const active = tabBtns.find(b => b.classList.contains('active'));
+      if (active) moveTabIndicator(active);
     });
 
     // ── Multi-Conversation Chat ──
@@ -1255,8 +1652,7 @@
       activeConvId = id;
       saveConversations();
       renderConvTabs();
-      chatEl.innerHTML = '';
-      appendMessage('assistant', GREETING);
+      renderChat();
       return id;
     }
 
@@ -1317,10 +1713,29 @@
       chatEl.innerHTML = '';
       const conv = conversations[activeConvId];
       if (!conv) return;
+      // Fresh conversation (only the auto-greeting) gets an illustrated empty state.
+      const hasUserMessage = conv.messages.some(m => m.role === 'user');
+      if (!hasUserMessage && conv.messages.length <= 1) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state chat-empty-state';
+        empty.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+          <div class="empty-state-title">Howdy — ready when you are</div>
+          <div class="empty-state-body">Ask about tasks, events, members, or paste a meeting transcript to auto-extract action items.</div>
+        `;
+        chatEl.appendChild(empty);
+        return;
+      }
       conv.messages.forEach(m => appendMessage(m.role, m.content, { animate: false }));
     }
 
     function appendMessage(role, content, { animate = true } = {}) {
+      // If an empty-state placeholder is showing, clear it before adding the first real message.
+      const placeholder = chatEl.querySelector('.chat-empty-state');
+      if (placeholder) placeholder.remove();
+
       const div = document.createElement('div');
       div.className = `msg ${role}` + (animate ? ' msg--enter' : '');
       div.innerHTML = renderMarkdown(content);
@@ -1625,6 +2040,11 @@
       renderChat();
       renderTasks();
       renderCalendar();
+      // Land on Home after login — render + activate (also positions the
+      // sliding indicator now that the header is laid out)
+      const homeBtn = document.getElementById('home-tab-btn');
+      if (homeBtn) activateTab(homeBtn);
+      renderHome();
     }
 
     function routeFromStoredUser(user) {
@@ -1797,6 +2217,19 @@
 
     // ── Init ──
     window.addEventListener('DOMContentLoaded', () => {
+      // Position the sliding indicator under the default (Home) tab so it
+      // doesn't pop in from 0-width on first render.
+      requestAnimationFrame(() => {
+        const active = tabBtns.find(b => b.classList.contains('active'));
+        if (active) {
+          // Disable transition for the initial placement so it doesn't "slide in"
+          if (tabIndicator) tabIndicator.style.transition = 'none';
+          moveTabIndicator(active);
+          requestAnimationFrame(() => {
+            if (tabIndicator) tabIndicator.style.transition = '';
+          });
+        }
+      });
       const user = loadCurrentUser();
       if (user) routeFromStoredUser(user);
       else showLogin();
@@ -1811,26 +2244,79 @@
       });
     }
 
-    function renderMarkdown(text) {
-      let html = escapeHtml(text);
-      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code>${code.trim()}</code></pre>`);
-      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-      html = html.replace(/((?:^|\n)- .+(?:\n- .+)*)/g, (match) => {
-        const items = match.trim().split('\n').map(l => `<li>${l.replace(/^- /, '')}</li>`).join('');
-        return `<ul>${items}</ul>`;
-      });
-      html = html.replace(/((?:^|\n)\d+\. .+(?:\n\d+\. .+)*)/g, (match) => {
-        const items = match.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`).join('');
-        return `<ol>${items}</ol>`;
-      });
-      html = html.replace(/\n\n+/g, '</p><p>');
-      html = html.replace(/\n/g, '<br>');
-      return `<p>${html}</p>`;
+    function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+
+    // Allow-list URL schemes to guard against javascript: / data: payloads
+    function safeUrl(raw) {
+      const trimmed = String(raw || '').trim();
+      if (/^(https?:|mailto:|tel:|#|\/)/i.test(trimmed)) return trimmed;
+      return '#';
     }
 
-    function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+    // Minimal but proper markdown→HTML. Input is always escaped first, so
+    // regex replacements only wrap the escaped text in tags — no XSS surface.
+    function renderMarkdown(text) {
+      if (text == null) return '';
+      // 1) Extract fenced code blocks first so their contents aren't touched by
+      //    later inline transforms (which would mangle asterisks, hashes, etc.)
+      const fences = [];
+      text = String(text).replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        const idx = fences.length;
+        fences.push(`<pre><code>${escapeHtml(code.replace(/\n$/, ''))}</code></pre>`);
+        return `RHFENCE${idx}ENDFENCE`;
+      });
+
+      // 2) Escape the rest, then apply block- and inline-level transforms
+      let html = escapeHtml(text);
+
+      // Headers (#, ##, ###)
+      html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^##\s+(.+)$/gm,  '<h2>$1</h2>');
+      html = html.replace(/^#\s+(.+)$/gm,   '<h1>$1</h1>');
+
+      // Blockquotes — consecutive lines starting with "> ".
+      // (Runs after escapeHtml, so `>` shows up as `&gt;`.)
+      html = html.replace(/(^|\n)((?:&gt;\s?.+(?:\n|$))+)/g, (match, pre, block) => {
+        const inner = block.replace(/^&gt;\s?/gm, '').replace(/\n+$/, '');
+        return `${pre}<blockquote>${inner.replace(/\n/g, '<br>')}</blockquote>`;
+      });
+
+      // Unordered lists
+      html = html.replace(/(^|\n)((?:[-*]\s+.+(?:\n|$))+)/g, (match, pre, block) => {
+        const items = block.trim().split('\n')
+          .map(l => `<li>${l.replace(/^[-*]\s+/, '')}</li>`).join('');
+        return `${pre}<ul>${items}</ul>`;
+      });
+
+      // Ordered lists
+      html = html.replace(/(^|\n)((?:\d+\.\s+.+(?:\n|$))+)/g, (match, pre, block) => {
+        const items = block.trim().split('\n')
+          .map(l => `<li>${l.replace(/^\d+\.\s+/, '')}</li>`).join('');
+        return `${pre}<ol>${items}</ol>`;
+      });
+
+      // Inline: code, bold, italic, links
+      html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>');
+      html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, href) =>
+        `<a href="${safeUrl(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`
+      );
+
+      // Paragraph breaks (double newlines) and soft breaks.
+      // But don't wrap block-level elements inside <p>.
+      const blocks = html.split(/\n\n+/).map(chunk => {
+        const trimmed = chunk.trim();
+        if (!trimmed) return '';
+        if (/^(<(h[1-6]|ul|ol|blockquote|pre)|RHFENCE)/.test(trimmed)) return trimmed;
+        return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+      });
+      html = blocks.join('');
+
+      // 3) Re-hydrate fenced code blocks
+      html = html.replace(/RHFENCE(\d+)ENDFENCE/g, (_, i) => fences[Number(i)] || '');
+      return html;
+    }
 
     // ── Task Tracker ──
     let cachedTasks = [];
@@ -1856,16 +2342,51 @@
       const total = cachedTasks.length;
       const done = cachedTasks.filter(t => (t.status || '').toLowerCase() === 'done').length;
       const overdue = cachedTasks.filter(t => isOverdue(t)).length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
       document.getElementById('summary-bar').innerHTML = `
         <div class="summary-item">Total: ${total}</div>
         <div class="summary-item">Done: ${done}</div>
         ${overdue > 0 ? `<div class="summary-item overdue">Overdue: ${overdue}</div>` : ''}
       `;
+
+      const fill = document.getElementById('tasks-progress-fill');
+      const bar  = document.getElementById('tasks-progress-bar');
+      const text = document.getElementById('tasks-progress-text');
+      const pctEl = document.getElementById('tasks-progress-pct');
+      if (fill) fill.style.width = pct + '%';
+      if (bar) bar.setAttribute('aria-valuenow', String(pct));
+      if (text) text.textContent = `${done} / ${total}`;
+      if (pctEl) pctEl.textContent = `${pct}%`;
+    }
+
+    function assigneeAvatar(nameField) {
+      const raw = String(nameField || '').trim();
+      if (!raw) return `<span class="avatar avatar-unassigned" aria-hidden="true">?</span>`;
+      const names = raw.split(',').map(s => s.trim()).filter(Boolean);
+      if (names.length > 1) {
+        return `<span class="avatar avatar-multi" aria-hidden="true">${names.length}</span>`;
+      }
+      const initial = names[0].charAt(0).toUpperCase() || '?';
+      return `<span class="avatar" aria-hidden="true">${escapeHtml(initial)}</span>`;
     }
 
     function renderTaskCards() {
       const container = document.getElementById('task-cards');
-      if (cachedTasks.length === 0) { container.innerHTML = '<p class="tasks-empty">No tasks yet. Add one above.</p>'; return; }
+      if (cachedTasks.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 18c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>
+              <path d="M4 18v3"></path><path d="M20 18v3"></path>
+              <path d="M8 14c0-2.2 1.8-4 4-4s4 1.8 4 4"></path>
+              <circle cx="12" cy="5" r="1.3"></circle>
+            </svg>
+            <div class="empty-state-title">All clear, partner</div>
+            <div class="empty-state-body">No tasks on the board. Rope one in with the <b>+ Add Task</b> button.</div>
+          </div>`;
+        return;
+      }
       const statusMap = { 'pending': 0, 'in-progress': 1, 'done': 2 };
       const sorted = [...cachedTasks].sort((a, b) => (statusMap[a.status] || 0) - (statusMap[b.status] || 0));
       container.innerHTML = sorted.map(t => {
@@ -1874,7 +2395,8 @@
         const badgeClass = s === 'in-progress' ? 'in-progress' : s === 'done' ? 'done' : 'pending';
         const displayStatus = s === 'in-progress' ? 'In Progress' : s === 'done' ? 'Done' : 'Pending';
         const safeTitle = escapeHtml(t.title);
-        return `<article class="task-card${overdue ? ' overdue' : ''}" aria-label="${safeTitle}, ${displayStatus}${overdue ? ', overdue' : ''}">
+        const assigneeName = (t.assigned_to || '').trim() || 'Unassigned';
+        return `<article class="task-card status-${badgeClass}${overdue ? ' overdue' : ''}" aria-label="${safeTitle}, ${displayStatus}${overdue ? ', overdue' : ''}" tabindex="0">
           <div class="task-card-header">
             <div class="task-title">${safeTitle}</div>
             <div class="task-card-actions">
@@ -1883,7 +2405,7 @@
             </div>
           </div>
           <div class="task-meta">
-            <span>${escapeHtml(t.assigned_to || 'Unassigned')}</span>
+            <span class="task-assignee">${assigneeAvatar(t.assigned_to)}<span>${escapeHtml(assigneeName)}</span></span>
             <span>${t.due_date ? formatDate(t.due_date) : 'No due date'}</span>
             <span class="status-badge ${badgeClass}">${displayStatus}</span>
             ${overdue ? '<span class="overdue-badge" aria-hidden="true">OVERDUE</span>' : ''}
@@ -1892,7 +2414,152 @@
       }).join('');
     }
 
-    async function renderTasks() { await fetchTasks(); renderSummary(); renderTaskCards(); }
+    async function renderTasks() { await fetchTasks(); renderSummary(); renderTaskCards(); if (typeof renderHome === 'function') renderHome(); }
+
+    // ── Home Dashboard ──
+    function greetingFor(hour) {
+      if (hour < 5)  return 'Up late';
+      if (hour < 12) return 'Morning';
+      if (hour < 17) return 'Afternoon';
+      if (hour < 21) return 'Evening';
+      return 'Evening';
+    }
+
+    function dueThisWeek(task) {
+      const status = (task.status || '').toLowerCase();
+      if (status === 'done' || !task.due_date) return false;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const end = new Date(today); end.setDate(end.getDate() + 7);
+      const due = new Date(task.due_date + 'T00:00:00');
+      return due >= today && due <= end;
+    }
+
+    function goToTasksTab() {
+      const btn = document.getElementById('tasks-tab-btn');
+      if (btn) activateTab(btn);
+    }
+
+    function renderHome() {
+      if (!currentUser) return;
+      const firstName = (currentUser.name || '').split(' ')[0] || 'partner';
+      const now = new Date();
+      const greetEl = document.getElementById('home-greeting');
+      const dateEl = document.getElementById('home-date');
+      if (greetEl) {
+        greetEl.innerHTML = `${greetingFor(now.getHours())}, <span class="accent">${escapeHtml(firstName)}</span>.`;
+      }
+      if (dateEl) {
+        dateEl.textContent = now.toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+        });
+      }
+
+      const mine = cachedTasks.filter(t => {
+        const a = String(t.assigned_to || '').toLowerCase();
+        return !currentUser.name || a.split(',').map(s => s.trim()).includes(currentUser.name.toLowerCase());
+      });
+      // Fall back to org-wide counts if the user has zero tasks — better than three zeroes.
+      const scope = mine.length > 0 ? mine : cachedTasks;
+      const scopeLabel = mine.length > 0 ? 'yours' : 'org-wide';
+      const overdueCount = scope.filter(isOverdue).length;
+      const weekCount = scope.filter(dueThisWeek).length;
+      const doneCount = scope.filter(t => (t.status || '').toLowerCase() === 'done').length;
+
+      const stats = document.getElementById('home-stats');
+      if (stats) {
+        stats.innerHTML = `
+          <button type="button" class="stat-card overdue" data-filter="overdue" aria-label="${overdueCount} overdue tasks">
+            <div class="stat-card-label">Overdue</div>
+            <div>
+              <div class="stat-card-value">${overdueCount}</div>
+              <div class="stat-card-foot">${scopeLabel}</div>
+            </div>
+          </button>
+          <button type="button" class="stat-card week" data-filter="week" aria-label="${weekCount} tasks due this week">
+            <div class="stat-card-label">Due this week</div>
+            <div>
+              <div class="stat-card-value">${weekCount}</div>
+              <div class="stat-card-foot">${scopeLabel}</div>
+            </div>
+          </button>
+          <button type="button" class="stat-card done" data-filter="done" aria-label="${doneCount} tasks completed">
+            <div class="stat-card-label">Completed</div>
+            <div>
+              <div class="stat-card-value">${doneCount}</div>
+              <div class="stat-card-foot">${scopeLabel}</div>
+            </div>
+          </button>
+        `;
+        stats.querySelectorAll('.stat-card').forEach(el => {
+          el.addEventListener('click', goToTasksTab);
+        });
+      }
+
+      // Recent activity — top 5 tasks sorted by most recent "touch" (created)
+      const activityEl = document.getElementById('home-activity');
+      const countEl = document.getElementById('home-activity-count');
+      if (!activityEl) return;
+      if (cachedTasks.length === 0) {
+        activityEl.innerHTML = `
+          <div class="empty-state" style="padding:24px 12px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v5l3 2"></path>
+            </svg>
+            <div class="empty-state-title">Nothing on the feed yet</div>
+            <div class="empty-state-body">Tasks created across the org will show up here.</div>
+          </div>`;
+        if (countEl) countEl.textContent = '';
+        return;
+      }
+      const recent = [...cachedTasks]
+        .sort((a, b) => {
+          const ad = a.created_at || '';
+          const bd = b.created_at || '';
+          if (ad && bd) return bd.localeCompare(ad);
+          return (b.id || 0) - (a.id || 0);
+        })
+        .slice(0, 5);
+      if (countEl) countEl.textContent = recent.length + ' recent';
+
+      activityEl.innerHTML = recent.map(t => {
+        const s = (t.status || 'pending').toLowerCase();
+        const done = s === 'done';
+        const pill = done
+          ? '<span class="activity-pill done">Completed</span>'
+          : '<span class="activity-pill created">Created</span>';
+        const when = t.created_at
+          ? relativeTime(t.created_at)
+          : (t.due_date ? ('Due ' + formatDate(t.due_date)) : '');
+        const who = escapeHtml((t.assigned_to || 'Unassigned').split(',')[0].trim() || 'Unassigned');
+        return `<button type="button" class="activity-item" data-task-id="${t.id}" aria-label="${escapeHtml(t.title)}, ${done ? 'completed' : 'created'}">
+          ${pill}
+          <div class="activity-body">
+            <div class="activity-title">${escapeHtml(t.title)}</div>
+            <div class="activity-meta">${who}${when ? ' · ' + escapeHtml(when) : ''}</div>
+          </div>
+        </button>`;
+      }).join('');
+      activityEl.querySelectorAll('.activity-item').forEach(el => {
+        el.addEventListener('click', goToTasksTab);
+      });
+    }
+
+    function relativeTime(isoish) {
+      try {
+        const then = new Date(isoish.includes('T') ? isoish : isoish.replace(' ', 'T') + 'Z');
+        const ms = Date.now() - then.getTime();
+        if (isNaN(ms)) return '';
+        const min = Math.floor(ms / 60000);
+        if (min < 1) return 'just now';
+        if (min < 60) return `${min}m ago`;
+        const hr = Math.floor(min / 60);
+        if (hr < 24) return `${hr}h ago`;
+        const d = Math.floor(hr / 24);
+        if (d < 7) return `${d}d ago`;
+        return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } catch { return ''; }
+    }
 
     // Form
     const addTaskBtn = document.getElementById('add-task-btn');
