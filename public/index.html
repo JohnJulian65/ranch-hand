@@ -581,6 +581,87 @@
       font-weight: var(--fw-semibold);
     }
 
+    /* Task filter bar — scope toggle + status pills */
+    .task-filters {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .filter-scope {
+      display: inline-flex;
+      background: var(--c-surface-2);
+      border: 1px solid var(--c-line);
+      border-radius: 10px;
+      padding: 3px;
+      width: fit-content;
+      align-self: flex-start;
+    }
+    .filter-scope-btn {
+      padding: 7px 16px;
+      border: none;
+      background: transparent;
+      color: var(--c-ink-2);
+      font-family: inherit;
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.04em;
+      border-radius: 8px;
+      cursor: pointer;
+      min-height: 36px;
+      transition:
+        background var(--dur-base) var(--ease-out-quart),
+        color var(--dur-base) var(--ease-out-quart),
+        box-shadow var(--dur-base) var(--ease-out-quart);
+    }
+    .filter-scope-btn.active {
+      background: var(--c-gold);
+      color: var(--c-ink);
+      box-shadow: 0 1px 3px oklch(0.22 0.008 75 / 0.12);
+    }
+    .filter-scope-btn:not(.active):hover { color: var(--c-ink); }
+    .filter-scope-btn:active:not(.active) { transform: scale(0.98); }
+
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .filter-pill {
+      padding: 5px 12px;
+      border: 1px solid var(--c-line-strong);
+      background: var(--c-surface);
+      color: var(--c-ink-2);
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      min-height: 30px;
+      transition:
+        background var(--dur-base) var(--ease-out-quart),
+        color var(--dur-base) var(--ease-out-quart),
+        border-color var(--dur-base) var(--ease-out-quart),
+        transform var(--dur-fast) var(--ease-out-quart);
+    }
+    .filter-pill:not(.active):hover {
+      color: var(--c-ink);
+      border-color: var(--c-gold);
+    }
+    .filter-pill:active:not(.active) { transform: scale(0.96); }
+    .filter-pill.active {
+      background: var(--c-gold);
+      border-color: var(--c-gold);
+      color: var(--c-ink);
+    }
+    .filter-pill.active.overdue-pill {
+      background: var(--c-danger);
+      border-color: var(--c-danger);
+      color: var(--c-on-dark);
+    }
+
     .task-form {
       display: none; background: var(--c-surface-3);
       border: 1px solid var(--c-line); border-radius: 12px;
@@ -1461,6 +1542,19 @@
           <div class="tasks-progress-fill" id="tasks-progress-fill"></div>
         </div>
         <div class="summary-bar" id="summary-bar" aria-label="Task summary"></div>
+        <div class="task-filters" aria-label="Task filters">
+          <div class="filter-scope" role="group" aria-label="Task scope">
+            <button type="button" class="filter-scope-btn active" data-scope="mine" aria-pressed="true">My Tasks</button>
+            <button type="button" class="filter-scope-btn" data-scope="all" aria-pressed="false">All Tasks</button>
+          </div>
+          <div class="filter-pills" role="group" aria-label="Status filter">
+            <button type="button" class="filter-pill active" data-status="all" aria-pressed="true">All</button>
+            <button type="button" class="filter-pill" data-status="pending" aria-pressed="false">Pending</button>
+            <button type="button" class="filter-pill" data-status="in-progress" aria-pressed="false">In Progress</button>
+            <button type="button" class="filter-pill" data-status="done" aria-pressed="false">Done</button>
+            <button type="button" class="filter-pill overdue-pill" data-status="overdue" aria-pressed="false">Overdue</button>
+          </div>
+        </div>
         <button class="add-task-btn" id="add-task-btn" type="button">+ Add Task</button>
         <form class="task-form" id="task-form" aria-label="Task editor">
           <label for="tf-title">Task</label>
@@ -2038,6 +2132,8 @@
       loadConversations();
       renderConvTabs();
       renderChat();
+      loadTaskFilters();
+      syncFilterUI();
       renderTasks();
       renderCalendar();
       // Land on Home after login — render + activate (also positions the
@@ -2321,6 +2417,69 @@
     // ── Task Tracker ──
     let cachedTasks = [];
 
+    // ── Task Filter State ──
+    // scope: 'mine' | 'all'    — whose tasks to include
+    // status: 'all' | 'pending' | 'in-progress' | 'done' | 'overdue'
+    const DEFAULT_FILTERS = { scope: 'mine', status: 'all' };
+    let taskFilters = { ...DEFAULT_FILTERS };
+
+    function filtersStorageKey(name) { return 'rh_task_filters_' + userSlug(name); }
+
+    function loadTaskFilters() {
+      taskFilters = { ...DEFAULT_FILTERS };
+      if (!currentUser) return;
+      try {
+        const raw = localStorage.getItem(filtersStorageKey(currentUser.name));
+        if (!raw) return;
+        const stored = JSON.parse(raw);
+        if (stored && typeof stored === 'object') {
+          if (stored.scope === 'mine' || stored.scope === 'all') taskFilters.scope = stored.scope;
+          if (['all','pending','in-progress','done','overdue'].includes(stored.status)) taskFilters.status = stored.status;
+        }
+      } catch {}
+    }
+
+    function saveTaskFilters() {
+      if (!currentUser) return;
+      try { localStorage.setItem(filtersStorageKey(currentUser.name), JSON.stringify(taskFilters)); } catch {}
+    }
+
+    function taskMatchesScope(task) {
+      if (taskFilters.scope !== 'mine' || !currentUser) return true;
+      const me = currentUser.name.toLowerCase();
+      return String(task.assigned_to || '')
+        .split(',').map(s => s.trim().toLowerCase())
+        .includes(me);
+    }
+
+    function taskMatchesStatus(task) {
+      const s = (task.status || 'pending').toLowerCase();
+      switch (taskFilters.status) {
+        case 'pending':     return s === 'pending';
+        case 'in-progress': return s === 'in-progress';
+        case 'done':        return s === 'done';
+        case 'overdue':     return isOverdue(task);
+        default:            return true;
+      }
+    }
+
+    function getVisibleTasks() {
+      return cachedTasks.filter(t => taskMatchesScope(t) && taskMatchesStatus(t));
+    }
+
+    function syncFilterUI() {
+      document.querySelectorAll('.filter-scope-btn').forEach(btn => {
+        const on = btn.dataset.scope === taskFilters.scope;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        const on = btn.dataset.status === taskFilters.status;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
     async function fetchTasks() {
       try { const res = await fetch('/api/tasks'); cachedTasks = await res.json(); } catch { cachedTasks = []; }
       return cachedTasks;
@@ -2339,9 +2498,10 @@
     }
 
     function renderSummary() {
-      const total = cachedTasks.length;
-      const done = cachedTasks.filter(t => (t.status || '').toLowerCase() === 'done').length;
-      const overdue = cachedTasks.filter(t => isOverdue(t)).length;
+      const visible = getVisibleTasks();
+      const total = visible.length;
+      const done = visible.filter(t => (t.status || '').toLowerCase() === 'done').length;
+      const overdue = visible.filter(t => isOverdue(t)).length;
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
       document.getElementById('summary-bar').innerHTML = `
@@ -2373,22 +2533,36 @@
 
     function renderTaskCards() {
       const container = document.getElementById('task-cards');
-      if (cachedTasks.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 18c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>
-              <path d="M4 18v3"></path><path d="M20 18v3"></path>
-              <path d="M8 14c0-2.2 1.8-4 4-4s4 1.8 4 4"></path>
-              <circle cx="12" cy="5" r="1.3"></circle>
-            </svg>
-            <div class="empty-state-title">All clear, partner</div>
-            <div class="empty-state-body">No tasks on the board. Rope one in with the <b>+ Add Task</b> button.</div>
-          </div>`;
+      const visible = getVisibleTasks();
+      if (visible.length === 0) {
+        // Differentiate: truly empty board vs. filters-hiding-everything
+        if (cachedTasks.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 18c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>
+                <path d="M4 18v3"></path><path d="M20 18v3"></path>
+                <path d="M8 14c0-2.2 1.8-4 4-4s4 1.8 4 4"></path>
+                <circle cx="12" cy="5" r="1.3"></circle>
+              </svg>
+              <div class="empty-state-title">All clear, partner</div>
+              <div class="empty-state-body">No tasks on the board. Rope one in with the <b>+ Add Task</b> button.</div>
+            </div>`;
+        } else {
+          container.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="M21 21l-4.3-4.3"></path>
+              </svg>
+              <div class="empty-state-title">Nothing matches</div>
+              <div class="empty-state-body">No tasks fit this filter. Try a different scope or status.</div>
+            </div>`;
+        }
         return;
       }
       const statusMap = { 'pending': 0, 'in-progress': 1, 'done': 2 };
-      const sorted = [...cachedTasks].sort((a, b) => (statusMap[a.status] || 0) - (statusMap[b.status] || 0));
+      const sorted = [...visible].sort((a, b) => (statusMap[a.status] || 0) - (statusMap[b.status] || 0));
       container.innerHTML = sorted.map(t => {
         const overdue = isOverdue(t);
         const s = (t.status || 'pending').toLowerCase();
@@ -2646,6 +2820,30 @@
       tfStatus.value = 'Pending';
       taskForm.classList.add('open');
       tfTitle.focus();
+    });
+
+    // ── Filter bar wiring ──
+    document.querySelectorAll('.filter-scope-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const next = btn.dataset.scope;
+        if (next === taskFilters.scope) return;
+        taskFilters.scope = next;
+        saveTaskFilters();
+        syncFilterUI();
+        renderSummary();
+        renderTaskCards();
+      });
+    });
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const next = btn.dataset.status;
+        if (next === taskFilters.status) return;
+        taskFilters.status = next;
+        saveTaskFilters();
+        syncFilterUI();
+        renderSummary();
+        renderTaskCards();
+      });
     });
     document.getElementById('tf-cancel').addEventListener('click', () => {
       taskForm.classList.remove('open');
