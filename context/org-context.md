@@ -41,7 +41,17 @@ UPCOMING EVENTS:
    - Note: This is the org's flagship annual event.
 
 SPONSORS:
-[PLACEHOLDER — sponsor list will be added here]
+- Desert 5 Spot — Derby Day sponsor, locked in at $4,000 value.
+
+DERBY DAY STATUS (as of April 2026):
+- Revenue: ~$3,000 collected of the $10,000 target; ~$7,000 remaining.
+- Ticket pace: ~15 tickets behind last year at the equivalent point, adjusted for this year's later start.
+- Final push: the current week is critical for personal-network outreach from every member.
+- Content plan: Jon Michael is running a two-week content schedule (stories, video thumbnails, text blasts) into Derby weekend; members are encouraged to submit messaging and language suggestions.
+
+LESSONS LEARNED:
+- Happy Hour scheduling: the most recent Happy Hour fell short of its $3,000 target because it competed with a large EDM concert on Pennsylvania Avenue. Going forward, always cross-reference the D.C. city events calendar before locking in a Happy Hour date.
+- Internal engagement: per César's feedback, members should share/repost CC Instagram stories when tagged and increase commenting on CC posts — internal amplification has been underperforming.
 
 FOUNDING DOCUMENTS:
 The full text of the Operating Agreement, Code of Conduct, and NDA are loaded as separate files. Refer to them directly when answering questions about governance, membership, officer duties, advisor roles, removal processes, meeting rules, bylaws, member conduct, confidentiality, or any organizational policy. Always cite the specific article/section when referencing these documents.
