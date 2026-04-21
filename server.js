@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs');
 
 const sgMail = require('@sendgrid/mail');
 const cron = require('node-cron');
+const cheerio = require('cheerio');
 
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -61,6 +62,34 @@ async function initDb() {
     )
   `;
 
+  const CREATE_EVENTS_TABLE = `
+    CREATE TABLE IF NOT EXISTS events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id TEXT NOT NULL UNIQUE,
+      event_name TEXT DEFAULT '',
+      event_date TEXT DEFAULT '',
+      total_guests INTEGER DEFAULT 0,
+      plus_ones INTEGER DEFAULT 0,
+      approved INTEGER DEFAULT 0,
+      maybe INTEGER DEFAULT 0,
+      declined INTEGER DEFAULT 0,
+      waitlist INTEGER DEFAULT 0,
+      last_synced TEXT DEFAULT (datetime('now'))
+    )
+  `;
+
+  const CREATE_EVENT_GUESTS_TABLE = `
+    CREATE TABLE IF NOT EXISTS event_guests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id TEXT NOT NULL,
+      guest_name TEXT DEFAULT '',
+      status TEXT DEFAULT '',
+      plus_one_count INTEGER DEFAULT 0,
+      rsvp_date TEXT DEFAULT '',
+      last_synced TEXT DEFAULT (datetime('now'))
+    )
+  `;
+
   if (process.env.TURSO_DATABASE_URL) {
     // Production: Turso (libsql over HTTP)
     const { createClient } = require('@libsql/client/web');
@@ -84,6 +113,8 @@ async function initDb() {
     await db.execute(CREATE_TASKS_TABLE);
     await db.execute(CREATE_MEMORY_TABLE);
     await db.execute(CREATE_USERS_TABLE);
+    await db.execute(CREATE_EVENTS_TABLE);
+    await db.execute(CREATE_EVENT_GUESTS_TABLE);
     const defaultPinHashTurso = await bcrypt.hash(DEFAULT_PIN, BCRYPT_ROUNDS);
     for (const [name, email] of Object.entries(MEMBER_EMAILS)) {
       await db.execute({
@@ -130,6 +161,8 @@ async function initDb() {
     sqlDb.run(CREATE_TASKS_TABLE);
     sqlDb.run(CREATE_MEMORY_TABLE);
     sqlDb.run(CREATE_USERS_TABLE);
+    sqlDb.run(CREATE_EVENTS_TABLE);
+    sqlDb.run(CREATE_EVENT_GUESTS_TABLE);
     const defaultPinHashLocal = await bcrypt.hash(DEFAULT_PIN, BCRYPT_ROUNDS);
     for (const [name, email] of Object.entries(MEMBER_EMAILS)) {
       sqlDb.run(
@@ -700,6 +733,144 @@ async function sendWeeklyDigest() {
   }
 }
 
+// ── Partiful integration ──
+// Pulls event metadata (scraped from the public page) and the guest list
+// (via api.partiful.com/getGuests) into our Turso tables. The auth token
+// lives in PARTIFUL_AUTH_TOKEN and is a short-lived Firebase JWT (~1h TTL),
+// so sync runs will start failing when it expires until it's rotated.
+const PARTIFUL_API_BASE = 'https://api.partiful.com';
+
+async function scrapePartifulEvent(eventId) {
+  const res = await fetch(`https://partiful.com/e/${eventId}`);
+  if (!res.ok) throw new Error(`event page returned ${res.status}`);
+  const html = await res.text();
+  const $ = cheerio.load(html);
+  const rawName = $('meta[property="og:title"]').attr('content') || '';
+  // Trim the trailing " | Partiful" suffix and a leading "RSVP to " if present
+  const name = rawName
+    .replace(/\s*\|\s*Partiful\s*$/i, '')
+    .replace(/^RSVP to\s+/i, '')
+    .trim();
+  const startIso = $('time').attr('datetime') || '';
+  return { name, startIso };
+}
+
+async function fetchPartifulGuests(eventId) {
+  const token = process.env.PARTIFUL_AUTH_TOKEN;
+  if (!token) throw new Error('PARTIFUL_AUTH_TOKEN is not set');
+  const res = await fetch(`${PARTIFUL_API_BASE}/getGuests`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      authorization: 'Bearer ' + token,
+    },
+    body: JSON.stringify({ data: { params: { eventId } } }),
+  });
+  if (!res.ok) {
+    const body = (await res.text()).slice(0, 200);
+    throw new Error(`getGuests returned ${res.status}: ${body}`);
+  }
+  const json = await res.json();
+  return (json.result && json.result.data) || [];
+}
+
+async function syncPartifulData(eventId) {
+  const id = eventId || process.env.PARTIFUL_EVENT_ID;
+  if (!id) throw new Error('no event id (pass arg or set PARTIFUL_EVENT_ID)');
+
+  const [event, guests] = await Promise.all([
+    scrapePartifulEvent(id).catch(err => {
+      console.warn('[Partiful] event scrape failed:', err.message);
+      return { name: '', startIso: '' };
+    }),
+    fetchPartifulGuests(id),
+  ]);
+
+  const counts = { APPROVED: 0, MAYBE: 0, DECLINED: 0, WAITLIST: 0 };
+  let plusOnes = 0;
+  for (const g of guests) {
+    const s = String(g.status || '').toUpperCase();
+    if (s in counts) counts[s]++;
+    plusOnes += Number(g.plusOneCount || (Array.isArray(g.plusOnes) ? g.plusOnes.length : 0)) || 0;
+  }
+
+  // Upsert events row. Using DELETE+INSERT since SQLite UPSERT syntax varies
+  // between sql.js and Turso — this is simpler and we're only writing one row.
+  await dbRun('DELETE FROM events WHERE event_id = ?', [id]);
+  await dbRun(
+    `INSERT INTO events
+       (event_id, event_name, event_date, total_guests, plus_ones,
+        approved, maybe, declined, waitlist, last_synced)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+    [
+      id, event.name, event.startIso,
+      guests.length, plusOnes,
+      counts.APPROVED, counts.MAYBE, counts.DECLINED, counts.WAITLIST,
+    ]
+  );
+
+  // Snapshot-replace the guest list for this event — simpler than diff-merging.
+  await dbRun('DELETE FROM event_guests WHERE event_id = ?', [id]);
+  for (const g of guests) {
+    await dbRun(
+      `INSERT INTO event_guests
+         (event_id, guest_name, status, plus_one_count, rsvp_date, last_synced)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+      [
+        id,
+        String(g.name || '').trim(),
+        String(g.status || '').toUpperCase(),
+        Number(g.plusOneCount || 0) || 0,
+        String(g.rsvpDate || ''),
+      ]
+    );
+  }
+
+  return {
+    eventId: id,
+    eventName: event.name,
+    eventDate: event.startIso,
+    totalGuests: guests.length,
+    plusOnes,
+    counts,
+  };
+}
+
+app.post('/api/partiful/sync', async (req, res) => {
+  const eventId = (req.body && req.body.eventId) || process.env.PARTIFUL_EVENT_ID;
+  if (!eventId) return res.status(400).json({ error: 'eventId is required' });
+  try {
+    const result = await syncPartifulData(eventId);
+    console.log(`[Partiful] Manual sync OK — ${result.totalGuests} guests, ${result.plusOnes} +1s (${eventId})`);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[Partiful] Sync failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/partiful/events', async (req, res) => {
+  try {
+    const eventId = req.query.eventId || process.env.PARTIFUL_EVENT_ID;
+    const events = eventId
+      ? await dbAll('SELECT * FROM events WHERE event_id = ?', [eventId])
+      : await dbAll('SELECT * FROM events ORDER BY last_synced DESC');
+    if (events.length === 0) return res.json({ events: [], guests: [] });
+    const primary = events[0];
+    const guests = await dbAll(
+      `SELECT guest_name, status, plus_one_count, rsvp_date
+       FROM event_guests
+       WHERE event_id = ?
+       ORDER BY rsvp_date DESC`,
+      [primary.event_id]
+    );
+    res.json({ event: primary, events, guests });
+  } catch (err) {
+    console.error('[Partiful] Fetch failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 initDb().then(() => {
   app.listen(PORT, () => {
     console.log(`Ranch Hand running on http://localhost:${PORT}`);
@@ -716,6 +887,23 @@ initDb().then(() => {
     sendWeeklyDigest();
   });
   console.log('[Digest] Weekly digest cron scheduled for Mondays at 8:00 AM');
+
+  // Partiful auto-sync every 2 hours (top of even hours).
+  // If PARTIFUL_EVENT_ID is unset, skip silently — this lets non-Derby deploys
+  // run without constant error logs.
+  if (process.env.PARTIFUL_EVENT_ID) {
+    cron.schedule('0 */2 * * *', async () => {
+      try {
+        const r = await syncPartifulData();
+        console.log(`[Partiful] Auto-sync OK — ${r.totalGuests} guests, ${r.plusOnes} +1s`);
+      } catch (err) {
+        console.error('[Partiful] Auto-sync failed:', err.message);
+      }
+    });
+    console.log('[Partiful] Auto-sync cron scheduled for every 2 hours');
+  } else {
+    console.log('[Partiful] PARTIFUL_EVENT_ID not set — auto-sync disabled');
+  }
 }).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);

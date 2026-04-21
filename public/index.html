@@ -1141,6 +1141,249 @@
       padding: 40px 20px;
     }
 
+    /* ── Events (Partiful) view ── */
+    #events-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px 32px;
+    }
+    .event-hero {
+      margin-bottom: 16px;
+      animation: rise var(--dur-slow) var(--ease-out-expo) both;
+    }
+    .event-hero-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .event-hero-eyebrow {
+      font-size: 0.7rem;
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--c-gold-deep);
+    }
+    .event-hero-title {
+      font-family: var(--font-display);
+      font-size: 1.65rem;
+      font-weight: 400;
+      color: var(--c-ink);
+      line-height: 1.15;
+      letter-spacing: 0.005em;
+      margin-top: 4px;
+      overflow-wrap: break-word;
+    }
+    .event-hero-date {
+      font-size: var(--fs-sm);
+      color: var(--c-ink-2);
+      margin-top: 4px;
+      letter-spacing: 0.02em;
+    }
+    .event-hero-footer {
+      margin-top: 10px;
+      font-size: var(--fs-xs);
+      color: var(--c-ink-3);
+      letter-spacing: 0.04em;
+    }
+    .sync-btn {
+      flex-shrink: 0;
+      background: var(--c-gold);
+      color: var(--c-ink);
+      border: none;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 1px 3px oklch(0.22 0.008 75 / 0.08);
+      transition:
+        background var(--dur-fast) var(--ease-out-quart),
+        transform var(--dur-fast) var(--ease-out-quart),
+        box-shadow var(--dur-fast) var(--ease-out-quart);
+    }
+    .sync-btn:hover:not(:disabled) {
+      background: var(--c-gold-hover);
+      transform: scale(1.03);
+      box-shadow: 0 4px 14px oklch(0.22 0.008 75 / 0.14);
+    }
+    .sync-btn:active:not(:disabled) { transform: scale(0.97); }
+    .sync-btn:disabled { opacity: 0.6; cursor: progress; }
+
+    .event-headcount-card {
+      background: var(--c-dark);
+      color: var(--c-on-dark);
+      border-radius: 14px;
+      padding: 20px 20px 22px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+      animation: rise var(--dur-slow) var(--ease-out-expo) 80ms both;
+    }
+    .event-headcount-card::after {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--c-gold);
+    }
+    .event-headcount-label {
+      font-size: 0.7rem;
+      font-weight: var(--fw-semibold);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--c-gold);
+    }
+    .event-headcount-value {
+      font-family: var(--font-display);
+      font-size: 3.2rem;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--c-on-dark);
+      font-variant-numeric: tabular-nums;
+      margin-top: 6px;
+      letter-spacing: 0.005em;
+    }
+    .event-headcount-foot {
+      font-size: var(--fs-xs);
+      color: var(--c-on-dark-2);
+      margin-top: 6px;
+      letter-spacing: 0.04em;
+    }
+
+    /* Reuse .stat-grid / .stat-card from Home, add Events-specific accents */
+    .stat-card.metric-rsvps   { border-left: 4px solid var(--c-gold); }
+    .stat-card.metric-rsvps .stat-card-value { color: var(--c-gold-deep); }
+    .stat-card.metric-plus    { border-left: 4px solid var(--c-info); }
+    .stat-card.metric-plus .stat-card-value  { color: var(--c-info); }
+    .stat-card.metric-total   { border-left: 4px solid var(--c-success); }
+    .stat-card.metric-total .stat-card-value { color: var(--c-success); }
+
+    /* RSVP-over-time bar chart */
+    .rsvp-chart {
+      background: var(--c-surface);
+      border: 1px solid var(--c-line);
+      border-radius: 12px;
+      padding: 14px 14px 10px;
+      margin-bottom: 22px;
+    }
+    .rsvp-chart-body {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 120px;
+      width: 100%;
+    }
+    .rsvp-chart-body .bar {
+      flex: 1;
+      min-width: 2px;
+      background: linear-gradient(180deg, var(--c-gold), var(--c-gold-hover));
+      border-radius: 2px 2px 0 0;
+      transition: height var(--dur-slow) var(--ease-out-expo);
+      position: relative;
+    }
+    .rsvp-chart-body .bar.empty {
+      background: var(--c-surface-2);
+      min-height: 2px;
+    }
+    .rsvp-chart-body .bar.today {
+      background: linear-gradient(180deg, var(--c-gold-deep), var(--c-gold));
+      box-shadow: 0 0 0 1px var(--c-gold-deep);
+    }
+    .rsvp-chart-body .bar:hover::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--c-dark);
+      color: var(--c-on-dark);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: var(--fs-xs);
+      white-space: nowrap;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .rsvp-chart-axis {
+      display: flex;
+      justify-content: space-between;
+      font-size: var(--fs-xs);
+      color: var(--c-ink-3);
+      font-variant-numeric: tabular-nums;
+      margin-top: 8px;
+      letter-spacing: 0.04em;
+    }
+    .rsvp-chart-empty {
+      padding: 24px 0;
+      text-align: center;
+      color: var(--c-ink-3);
+      font-size: var(--fs-sm);
+      font-style: italic;
+    }
+
+    /* Guest list */
+    .event-guest-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 440px;
+      overflow-y: auto;
+      padding: 2px;
+      border-radius: 12px;
+    }
+    .event-guest-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-line);
+      border-radius: 10px;
+      font-size: var(--fs-sm);
+    }
+    .event-guest-row .avatar {
+      width: 28px; height: 28px;
+      font-size: 0.78rem;
+    }
+    .event-guest-name {
+      font-weight: var(--fw-semibold);
+      color: var(--c-ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .event-guest-plus {
+      font-size: var(--fs-xs);
+      color: var(--c-gold-deep);
+      font-weight: var(--fw-semibold);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+    }
+    .event-guest-date {
+      font-size: var(--fs-xs);
+      color: var(--c-ink-3);
+      font-variant-numeric: tabular-nums;
+    }
+    .event-status-pill {
+      font-size: 0.62rem;
+      font-weight: var(--fw-bold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--c-success-bg);
+      color: var(--c-success-text);
+    }
+    .event-status-pill.pending { background: var(--c-pending-bg); color: var(--c-pending-text); }
+    .event-status-pill.declined { background: var(--c-danger-bg); color: var(--c-danger-text); }
+    .event-status-pill.maybe { background: var(--c-info-bg); color: var(--c-info-text); }
+    .event-status-pill.waitlist { background: var(--c-surface-2); color: var(--c-ink-2); }
+
     /* ── Responsive adaptation ──
        Mobile-first baseline above. On wider viewports, the app
        sits as a centered frame rather than stretching edge-to-edge. */
@@ -1156,6 +1399,9 @@
       #chat { padding: 20px 24px; }
       #tasks-view { padding: 24px; }
       #home-view { padding: 28px 24px 40px; }
+      #events-view { padding: 28px 24px 40px; }
+      .event-headcount-value { font-size: 3.6rem; }
+      .event-hero-title { font-size: 1.9rem; }
       #input-bar { padding: 14px 24px; }
       header { padding: 18px 24px; }
       .conv-bar { padding-inline: 12px; }
@@ -1493,6 +1739,7 @@
     <button class="active" role="tab" id="home-tab-btn" aria-selected="true" aria-controls="home-tab" tabindex="0" data-tab="home-tab">Home</button>
     <button role="tab" id="chat-tab-btn" aria-selected="false" aria-controls="chat-tab" tabindex="-1" data-tab="chat-tab">Chat</button>
     <button role="tab" id="tasks-tab-btn" aria-selected="false" aria-controls="tasks-tab" tabindex="-1" data-tab="tasks-tab">Tasks</button>
+    <button role="tab" id="events-tab-btn" aria-selected="false" aria-controls="events-tab" tabindex="-1" data-tab="events-tab" hidden>Events</button>
     <span class="tab-indicator" id="tab-indicator" aria-hidden="true"></span>
   </nav>
 
@@ -1612,6 +1859,47 @@
         </section>
       </div>
     </section>
+
+    <!-- Events Tab (Julian-only preview) -->
+    <section id="events-tab" class="tab-content" role="tabpanel" aria-labelledby="events-tab-btn" tabindex="0" hidden>
+      <h2 class="sr-only">Events</h2>
+      <div id="events-view">
+        <div class="event-hero">
+          <div class="event-hero-head">
+            <div>
+              <div class="event-hero-eyebrow">Partiful — live sync</div>
+              <div class="event-hero-title" id="event-name">—</div>
+              <div class="event-hero-date" id="event-date"></div>
+            </div>
+            <button type="button" class="sync-btn" id="sync-events-btn">Sync Now</button>
+          </div>
+          <div class="event-hero-footer" id="event-synced-at" aria-live="polite"></div>
+        </div>
+
+        <div class="event-headcount-card">
+          <div class="event-headcount-label">Expected headcount</div>
+          <div class="event-headcount-value" id="event-headcount">—</div>
+          <div class="event-headcount-foot" id="event-headcount-foot"></div>
+        </div>
+
+        <div class="stat-grid stagger-in" id="event-stats" role="group" aria-label="Event stats"></div>
+
+        <div class="home-section-head">
+          <span>RSVPs over time</span>
+          <span id="event-chart-peak" aria-hidden="true"></span>
+        </div>
+        <div class="rsvp-chart" id="rsvp-chart">
+          <div class="rsvp-chart-body" id="rsvp-chart-bars" aria-hidden="true"></div>
+          <div class="rsvp-chart-axis" id="rsvp-chart-axis" aria-hidden="true"></div>
+        </div>
+
+        <div class="home-section-head">
+          <span>Guest list</span>
+          <span id="event-guest-count" aria-hidden="true"></span>
+        </div>
+        <div class="event-guest-list stagger-in" id="event-guest-list" aria-label="Guest list"></div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -1654,17 +1942,22 @@
       moveTabIndicator(btn);
       // Hooks for tab-specific refresh
       if (btn.dataset.tab === 'home-tab') renderHome();
+      if (btn.dataset.tab === 'events-tab') renderEvents();
       if (focus) btn.focus();
     }
 
-    tabBtns.forEach((btn, i) => {
+    tabBtns.forEach((btn) => {
       btn.addEventListener('click', () => activateTab(btn));
       btn.addEventListener('keydown', (e) => {
+        // Re-evaluate visible tabs each time — Events tab can toggle post-login
+        const visible = tabBtns.filter(b => !b.hidden);
+        const idx = visible.indexOf(btn);
+        if (idx === -1) return;
         let target;
-        if (e.key === 'ArrowRight') target = tabBtns[(i + 1) % tabBtns.length];
-        else if (e.key === 'ArrowLeft') target = tabBtns[(i - 1 + tabBtns.length) % tabBtns.length];
-        else if (e.key === 'Home') target = tabBtns[0];
-        else if (e.key === 'End') target = tabBtns[tabBtns.length - 1];
+        if (e.key === 'ArrowRight') target = visible[(idx + 1) % visible.length];
+        else if (e.key === 'ArrowLeft') target = visible[(idx - 1 + visible.length) % visible.length];
+        else if (e.key === 'Home') target = visible[0];
+        else if (e.key === 'End') target = visible[visible.length - 1];
         else return;
         e.preventDefault();
         activateTab(target, { focus: true });
@@ -2136,6 +2429,15 @@
       syncFilterUI();
       renderTasks();
       renderCalendar();
+      // Events tab is a Julian-only preview — unhide the button + section for
+      // that user, keep it removed from the tablist for everyone else.
+      const eventsBtn = document.getElementById('events-tab-btn');
+      const eventsSection = document.getElementById('events-tab');
+      if (eventsBtn && eventsSection) {
+        const show = String(user.name || '').trim().toLowerCase() === 'julian';
+        eventsBtn.hidden = !show;
+        if (!show) eventsSection.hidden = true;
+      }
       // Land on Home after login — render + activate (also positions the
       // sliding indicator now that the header is laid out)
       const homeBtn = document.getElementById('home-tab-btn');
@@ -2734,6 +3036,253 @@
         return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       } catch { return ''; }
     }
+
+    // ── Events (Partiful) view ──
+    // Displays only for 'Julian' — gated in initApp(), not a security boundary.
+    let cachedEventState = null;
+
+    // Redact the guest's last name: keep first name + last initial + "."
+    // (e.g. "John Vandaele III" -> "John V.", "Cesar" -> "Cesar", null -> "Anonymous")
+    function redactGuestName(name) {
+      const clean = String(name || '').trim();
+      if (!clean) return 'Anonymous';
+      const parts = clean.split(/\s+/).filter(Boolean);
+      if (parts.length === 1) return parts[0];
+      const first = parts[0];
+      const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+      return `${first} ${lastInitial}.`;
+    }
+
+    function formatEventDate(iso) {
+      if (!iso) return '';
+      try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+        });
+      } catch { return ''; }
+    }
+
+    // Bucket guest RSVPs by UTC day from the earliest to the latest date in
+    // the data set, filling in zero-count days so the bar chart x-axis is
+    // actually time-linear instead of a compressed count-ordered list.
+    function buildRsvpTimeline(guests) {
+      const byDay = {};
+      let minDay = null, maxDay = null;
+      for (const g of guests) {
+        const raw = g.rsvp_date;
+        if (!raw) continue;
+        const day = String(raw).slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+        byDay[day] = (byDay[day] || 0) + 1;
+        if (!minDay || day < minDay) minDay = day;
+        if (!maxDay || day > maxDay) maxDay = day;
+      }
+      if (!minDay) return { bars: [], start: '', end: '', peakDay: '', peakCount: 0 };
+
+      const todayIso = new Date().toISOString().slice(0, 10);
+      if (maxDay < todayIso) maxDay = todayIso; // stretch axis to today so "recent" context is visible
+
+      // Walk the date range inclusively
+      const bars = [];
+      const max = Math.max(1, ...Object.values(byDay));
+      const start = new Date(minDay + 'T00:00:00Z');
+      const end = new Date(maxDay + 'T00:00:00Z');
+      let peakDay = minDay, peakCount = 0;
+      for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+        const iso = d.toISOString().slice(0, 10);
+        const count = byDay[iso] || 0;
+        if (count > peakCount) { peakCount = count; peakDay = iso; }
+        bars.push({
+          date: iso,
+          count,
+          pct: (count / max) * 100,
+          isToday: iso === todayIso,
+        });
+      }
+      return { bars, start: minDay, end: maxDay, peakDay, peakCount };
+    }
+
+    function shortDayLabel(iso) {
+      try {
+        return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', {
+          month: 'short', day: 'numeric', timeZone: 'UTC',
+        });
+      } catch { return iso; }
+    }
+
+    async function fetchEventData() {
+      try {
+        const res = await fetch('/api/partiful/events');
+        if (!res.ok) throw new Error(`events api returned ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.error('[Events] fetch failed:', err);
+        return null;
+      }
+    }
+
+    async function renderEvents() {
+      if (!currentUser || String(currentUser.name || '').trim().toLowerCase() !== 'julian') return;
+
+      const data = await fetchEventData();
+      cachedEventState = data;
+
+      const nameEl = document.getElementById('event-name');
+      const dateEl = document.getElementById('event-date');
+      const syncedEl = document.getElementById('event-synced-at');
+      const headEl = document.getElementById('event-headcount');
+      const headFoot = document.getElementById('event-headcount-foot');
+      const statsEl = document.getElementById('event-stats');
+      const guestListEl = document.getElementById('event-guest-list');
+      const guestCountEl = document.getElementById('event-guest-count');
+
+      if (!data || !data.event) {
+        if (nameEl) nameEl.textContent = 'No sync data yet';
+        if (dateEl) dateEl.textContent = '';
+        if (syncedEl) syncedEl.textContent = 'Tap "Sync Now" to pull from Partiful.';
+        if (headEl) headEl.textContent = '—';
+        if (headFoot) headFoot.textContent = '';
+        if (statsEl) statsEl.innerHTML = '';
+        if (guestListEl) guestListEl.innerHTML = '<div class="rsvp-chart-empty">No guests synced yet.</div>';
+        if (guestCountEl) guestCountEl.textContent = '';
+        renderRsvpChart([]);
+        return;
+      }
+
+      const ev = data.event;
+      const guests = data.guests || [];
+      const approved = Number(ev.approved) || 0;
+      const plusOnes = Number(ev.plus_ones) || 0;
+      const total = Number(ev.total_guests) || approved;
+      const expected = approved + plusOnes;
+
+      if (nameEl) nameEl.textContent = ev.event_name || 'Unnamed event';
+      if (dateEl) dateEl.textContent = formatEventDate(ev.event_date);
+      if (syncedEl && ev.last_synced) {
+        syncedEl.textContent = `Last synced ${relativeTime(ev.last_synced)} · ${total} guests on file`;
+      }
+      if (headEl) headEl.textContent = expected.toLocaleString();
+      if (headFoot) headFoot.textContent = `${approved.toLocaleString()} approved + ${plusOnes.toLocaleString()} plus-ones`;
+
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <div class="stat-card metric-rsvps" role="figure" aria-label="${approved} RSVPs">
+            <div class="stat-card-label">RSVPs</div>
+            <div>
+              <div class="stat-card-value">${approved.toLocaleString()}</div>
+              <div class="stat-card-foot">approved</div>
+            </div>
+          </div>
+          <div class="stat-card metric-plus" role="figure" aria-label="${plusOnes} plus-ones">
+            <div class="stat-card-label">Plus-Ones</div>
+            <div>
+              <div class="stat-card-value">${plusOnes.toLocaleString()}</div>
+              <div class="stat-card-foot">extra guests</div>
+            </div>
+          </div>
+          <div class="stat-card metric-total" role="figure" aria-label="${expected} total expected">
+            <div class="stat-card-label">Total Expected</div>
+            <div>
+              <div class="stat-card-value">${expected.toLocaleString()}</div>
+              <div class="stat-card-foot">headcount</div>
+            </div>
+          </div>
+        `;
+      }
+
+      renderRsvpChart(guests);
+
+      if (guestCountEl) guestCountEl.textContent = `${guests.length} shown`;
+      if (guestListEl) {
+        if (guests.length === 0) {
+          guestListEl.innerHTML = '<div class="rsvp-chart-empty">No guests on file yet.</div>';
+        } else {
+          guestListEl.innerHTML = guests.map(g => {
+            const displayName = redactGuestName(g.guest_name);
+            const initial = displayName.charAt(0).toUpperCase() || '?';
+            const status = String(g.status || 'approved').toLowerCase();
+            const statusLabel = status.charAt(0).toUpperCase() + status.slice(1).replace(/[_-]/g, ' ');
+            const plus = Number(g.plus_one_count) || 0;
+            const when = g.rsvp_date ? relativeTime(g.rsvp_date) : '';
+            return `<div class="event-guest-row">
+              <span class="avatar" aria-hidden="true">${escapeHtml(initial)}</span>
+              <span class="event-guest-name">${escapeHtml(displayName)}</span>
+              <span class="event-status-pill ${status}">${escapeHtml(statusLabel)}</span>
+              <span class="event-guest-plus">${plus > 0 ? '+' + plus : ''}</span>
+              <span class="event-guest-date" style="grid-column: 2 / -1; margin-top: -4px;">${escapeHtml(when)}</span>
+            </div>`;
+          }).join('');
+        }
+      }
+    }
+
+    function renderRsvpChart(guests) {
+      const barsEl = document.getElementById('rsvp-chart-bars');
+      const axisEl = document.getElementById('rsvp-chart-axis');
+      const peakEl = document.getElementById('event-chart-peak');
+      if (!barsEl) return;
+
+      const timeline = buildRsvpTimeline(guests);
+      if (timeline.bars.length === 0) {
+        barsEl.innerHTML = '<div class="rsvp-chart-empty" style="flex:1;align-self:center;">No RSVPs recorded yet.</div>';
+        if (axisEl) axisEl.innerHTML = '';
+        if (peakEl) peakEl.textContent = '';
+        return;
+      }
+      barsEl.innerHTML = timeline.bars.map(b => {
+        const cls = ['bar'];
+        if (b.count === 0) cls.push('empty');
+        if (b.isToday) cls.push('today');
+        const label = `${shortDayLabel(b.date)} — ${b.count} RSVP${b.count === 1 ? '' : 's'}`;
+        const height = b.count === 0 ? 0 : Math.max(4, b.pct);
+        return `<span class="${cls.join(' ')}" style="height:${height}%" data-label="${escapeHtml(label)}" role="presentation"></span>`;
+      }).join('');
+      if (axisEl) {
+        axisEl.innerHTML = `<span>${shortDayLabel(timeline.start)}</span><span>${shortDayLabel(timeline.end)}</span>`;
+      }
+      if (peakEl && timeline.peakCount > 0) {
+        peakEl.textContent = `peak ${timeline.peakCount} on ${shortDayLabel(timeline.peakDay)}`;
+      } else if (peakEl) {
+        peakEl.textContent = '';
+      }
+    }
+
+    async function runEventSync() {
+      const btn = document.getElementById('sync-events-btn');
+      const syncedEl = document.getElementById('event-synced-at');
+      if (!btn) return;
+      const originalLabel = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Syncing…';
+      if (syncedEl) syncedEl.textContent = 'Pulling latest from Partiful…';
+      try {
+        const res = await fetch('/api/partiful/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `sync returned ${res.status}`);
+        }
+        await renderEvents();
+      } catch (err) {
+        console.error('[Events] sync failed:', err);
+        if (syncedEl) syncedEl.textContent = 'Sync failed: ' + (err.message || 'unknown error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      }
+    }
+
+    // Wire the Sync Now button once at load — it's safe even if the Events tab
+    // stays hidden for non-Julian users (button just never gets clicked).
+    (function wireSyncBtn() {
+      const btn = document.getElementById('sync-events-btn');
+      if (btn) btn.addEventListener('click', runEventSync);
+    })();
 
     // Form
     const addTaskBtn = document.getElementById('add-task-btn');
